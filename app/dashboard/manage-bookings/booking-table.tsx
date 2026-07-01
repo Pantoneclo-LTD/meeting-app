@@ -1,0 +1,179 @@
+"use client"
+
+import { useState } from "react"
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  getPaginationRowModel,
+} from '@tanstack/react-table'
+import dayjs from "dayjs"
+import { Button } from "@/components/ui/button"
+import { updateBookingStatus } from "@/app/actions/booking"
+import { toast } from "sonner"
+import { utils, writeFile } from "xlsx"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
+
+type BookingRow = {
+  id: string
+  purpose: string
+  status: string
+  startTime: string
+  endTime: string
+  user: { name: string, email: string }
+}
+
+const columnHelper = createColumnHelper<BookingRow>()
+
+export function BookingTable({ initialBookings }: { initialBookings: BookingRow[] }) {
+  const [bookings, setBookings] = useState(initialBookings)
+
+  const handleStatusUpdate = async (id: string, status: "APPROVED" | "REJECTED" | "CANCELLED") => {
+    try {
+      await updateBookingStatus(id, status)
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
+      toast.success(`Booking ${status.toLowerCase()} successfully`)
+    } catch (e: unknown) {
+      toast.error((e as Error).message || "Failed to update status")
+    }
+  }
+
+  const columns = [
+    columnHelper.accessor('user.name', {
+      header: 'User',
+      cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('purpose', {
+      header: 'Purpose',
+      cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('startTime', {
+      header: 'Date & Time',
+      cell: info => {
+        const start = dayjs(info.getValue())
+        const end = dayjs(info.row.original.endTime)
+        return (
+          <div className="text-sm">
+            <div>{start.format("MMM D, YYYY")}</div>
+            <div className="text-gray-500">{start.format("h:mm A")} - {end.format("h:mm A")}</div>
+          </div>
+        )
+      }
+    }),
+    columnHelper.accessor('status', {
+      header: 'Status',
+      cell: info => {
+        const status = info.getValue()
+        let color = "bg-gray-100 text-gray-800"
+        if (status === "APPROVED") color = "bg-green-100 text-green-800"
+        if (status === "PENDING") color = "bg-yellow-100 text-yellow-800"
+        if (status === "REJECTED" || status === "CANCELLED") color = "bg-red-100 text-red-800"
+        return <span className={`px-2 py-1 rounded text-xs font-medium ${color}`}>{status}</span>
+      },
+    }),
+    columnHelper.display({
+      id: 'actions',
+      header: 'Actions',
+      cell: info => {
+        if (info.row.original.status !== "PENDING") return null
+        return (
+          <div className="flex space-x-2">
+            <Button size="sm" variant="default" onClick={() => handleStatusUpdate(info.row.original.id, "APPROVED")}>Approve</Button>
+            <Button size="sm" variant="destructive" onClick={() => handleStatusUpdate(info.row.original.id, "REJECTED")}>Reject</Button>
+          </div>
+        )
+      },
+    }),
+  ]
+
+  const table = useReactTable({
+    data: bookings,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  })
+
+  const exportExcel = () => {
+    const ws = utils.json_to_sheet(bookings.map(b => ({
+      Date: dayjs(b.startTime).format("YYYY-MM-DD"),
+      Time: `${dayjs(b.startTime).format("HH:mm")} - ${dayjs(b.endTime).format("HH:mm")}`,
+      User: b.user.name,
+      Purpose: b.purpose,
+      Status: b.status
+    })))
+    const wb = utils.book_new()
+    utils.book_append_sheet(wb, ws, "Bookings")
+    writeFile(wb, "bookings_export.xlsx")
+  }
+
+  const exportPDF = () => {
+    const doc = new jsPDF()
+    doc.text("Meeting Room Bookings", 14, 15)
+    
+    const tableData = bookings.map(b => [
+      dayjs(b.startTime).format("YYYY-MM-DD"),
+      `${dayjs(b.startTime).format("HH:mm")} - ${dayjs(b.endTime).format("HH:mm")}`,
+      b.user.name,
+      b.purpose,
+      b.status
+    ])
+
+    autoTable(doc, {
+      head: [['Date', 'Time', 'User', 'Purpose', 'Status']],
+      body: tableData,
+      startY: 20
+    })
+    
+    doc.save("bookings_export.pdf")
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end space-x-2">
+        <Button variant="outline" onClick={exportExcel}>Export Excel</Button>
+        <Button variant="outline" onClick={exportPDF}>Export PDF</Button>
+      </div>
+      <div className="border rounded-md bg-white">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-gray-50 border-b">
+            {table.getHeaderGroups().map(headerGroup => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map(header => (
+                  <th key={header.id} className="p-3 font-semibold text-gray-700">
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map(row => (
+              <tr key={row.id} className="border-b hover:bg-gray-50">
+                {row.getVisibleCells().map(cell => (
+                  <td key={cell.id} className="p-3">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        
+        <div className="flex items-center justify-between p-3 border-t bg-gray-50">
+          <div className="text-gray-500 text-sm">
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          </div>
+          <div className="space-x-2">
+            <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Previous</Button>
+            <Button size="sm" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Next</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
