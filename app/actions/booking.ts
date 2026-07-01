@@ -34,9 +34,9 @@ const bookingSchema = z.object({
   return start >= now
 }, { message: "Cannot book a meeting in the past", path: ["startTime"] })
   .refine((data) => new Date(data.startTime) < new Date(data.endTime), {
-  message: "End time must be after start time",
-  path: ["endTime"]
-})
+    message: "End time must be after start time",
+    path: ["endTime"]
+  })
 
 export async function createBooking(data: z.infer<typeof bookingSchema>) {
   const session = await auth()
@@ -60,7 +60,7 @@ export async function createBooking(data: z.infer<typeof bookingSchema>) {
   }
 
   // Find overlapping bookings
-  const overlapping = await prisma.booking.findFirst({
+  await prisma.booking.findFirst({
     where: {
       status: {
         in: ["PENDING", "APPROVED"]
@@ -95,7 +95,7 @@ export async function createBooking(data: z.infer<typeof bookingSchema>) {
   const hasOverlap = allActiveBookings.some((booking: Booking) => {
     const existingStart = booking.startTime
     const existingEndWithPrep = new Date(booking.endTime.getTime() + booking.preparationTime * 60000)
-    
+
     return newStart < existingEndWithPrep && newEndWithPrep > existingStart
   })
 
@@ -122,7 +122,7 @@ export async function createBooking(data: z.infer<typeof bookingSchema>) {
   })
 
   if (admins.length > 0) {
-    const emailPromises = admins.map((admin: User) => 
+    const emailPromises = admins.map((admin: User) =>
       transport.sendMail({
         from: env.SMTP_FROM,
         to: admin.email,
@@ -142,7 +142,7 @@ export async function updateBookingStatus(bookingId: string, status: "APPROVED" 
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
-  const booking = await prisma.booking.findUnique({ 
+  const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: { user: true }
   })
@@ -167,7 +167,7 @@ export async function updateBookingStatus(bookingId: string, status: "APPROVED" 
   // Send email to user if status is APPROVED or REJECTED
   if ((status === "APPROVED" || status === "REJECTED") && booking.user.email) {
     const attachments: { filename: string, content: string, contentType: string }[] = []
-    
+
     if (status === "APPROVED") {
       const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -181,7 +181,7 @@ SUMMARY:${booking.purpose}
 DESCRIPTION:Your meeting room booking has been approved.
 END:VEVENT
 END:VCALENDAR`
-      
+
       attachments.push({
         filename: 'invite.ics',
         content: icsContent,
@@ -195,10 +195,10 @@ END:VCALENDAR`
         to: booking.user.email,
         subject: `Meeting Booking ${status === "APPROVED" ? "Approved" : "Rejected"}`,
         html: getBookingStatusEmailHtml(
-          booking.user.name, 
-          status, 
-          booking.purpose, 
-          booking.startTime, 
+          booking.user.name,
+          status,
+          booking.purpose,
+          booking.startTime,
           booking.endTime
         ),
         attachments
@@ -241,7 +241,7 @@ export async function getBookingsForCalendar(startStr: string, endStr: string) {
     const isOwner = b.userId === session.user.id
     const isAdmin = session.user.role === "ADMIN" || session.user.role === "SUPERADMIN"
     const canView = isOwner || isAdmin
-    
+
     // Add preparation time to the visual event end time, or just show it separately
     const endWithPrep = new Date(b.endTime.getTime() + b.preparationTime * 60000)
 

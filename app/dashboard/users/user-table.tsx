@@ -85,7 +85,7 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
     columnHelper.accessor('name', { header: 'Name' }),
     columnHelper.accessor('email', { header: 'Email' }),
     columnHelper.accessor('team', { header: 'Team', cell: info => info.getValue() || '-' }),
-    columnHelper.accessor('role', { 
+    columnHelper.accessor('role', {
       header: 'Role',
       cell: info => <span className="text-xs font-semibold px-2 py-1 bg-gray-100 rounded">{info.getValue()}</span>
     }),
@@ -101,6 +101,7 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
     }),
   ]
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: users,
     columns,
@@ -164,7 +165,7 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
             </form>
           </DialogContent>
         </Dialog>
-        
+
         <Dialog open={!!changePasswordUserId} onOpenChange={(open) => !open && setChangePasswordUserId(null)}>
           <DialogContent>
             <DialogHeader>

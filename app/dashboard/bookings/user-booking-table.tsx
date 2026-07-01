@@ -80,6 +80,7 @@ export function UserBookingTable({ initialBookings }: { initialBookings: Booking
     }),
   ]
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: bookings,
     columns,
@@ -124,7 +125,7 @@ export function UserBookingTable({ initialBookings }: { initialBookings: Booking
             ))}
           </tbody>
         </table>
-        
+
         <div className="flex items-center justify-between p-3 border-t bg-gray-50">
           <div className="text-gray-500 text-sm">
             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}

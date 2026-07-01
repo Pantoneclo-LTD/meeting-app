@@ -45,17 +45,17 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
           return false
         }
       }
-      
+
       // Team filter
       if (filterTeam !== "ALL" && b.user.team !== filterTeam) {
         return false
       }
-      
+
       // Status filter
       if (filterStatus !== "ALL" && b.status !== filterStatus) {
         return false
       }
-      
+
       // Date range filter
       if (filterStartDate) {
         if (dayjs(b.startTime).isBefore(dayjs(filterStartDate), 'day')) return false
@@ -63,7 +63,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
       if (filterEndDate) {
         if (dayjs(b.endTime).isAfter(dayjs(filterEndDate), 'day')) return false
       }
-      
+
       return true
     })
   }, [bookings, searchQuery, filterTeam, filterStartDate, filterEndDate, filterStatus])
@@ -126,6 +126,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
     }),
   ]
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: filteredBookings,
     columns,
@@ -149,7 +150,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
   const exportPDF = () => {
     const doc = new jsPDF()
     doc.text("Meeting Room Bookings", 14, 15)
-    
+
     const tableData = filteredBookings.map(b => [
       dayjs(b.startTime).format("YYYY-MM-DD"),
       `${dayjs(b.startTime).format("HH:mm")} - ${dayjs(b.endTime).format("HH:mm")}`,
@@ -163,7 +164,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
       body: tableData,
       startY: 20
     })
-    
+
     doc.save("bookings_export.pdf")
   }
 
@@ -173,9 +174,9 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-white p-4 rounded-md border">
         <div>
           <label className="text-xs font-semibold text-gray-500 uppercase">Search</label>
-          <input 
-            type="text" 
-            placeholder="Name or Purpose..." 
+          <input
+            type="text"
+            placeholder="Name or Purpose..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full mt-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -183,8 +184,8 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
         </div>
         <div>
           <label className="text-xs font-semibold text-gray-500 uppercase">Team</label>
-          <select 
-            value={filterTeam} 
+          <select
+            value={filterTeam}
             onChange={(e) => setFilterTeam(e.target.value)}
             className="w-full mt-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
@@ -196,8 +197,8 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
         </div>
         <div>
           <label className="text-xs font-semibold text-gray-500 uppercase">Status</label>
-          <select 
-            value={filterStatus} 
+          <select
+            value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="w-full mt-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
@@ -210,8 +211,8 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
         </div>
         <div>
           <label className="text-xs font-semibold text-gray-500 uppercase">Start Date</label>
-          <input 
-            type="date" 
+          <input
+            type="date"
             value={filterStartDate}
             onChange={(e) => setFilterStartDate(e.target.value)}
             className="w-full mt-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -219,8 +220,8 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
         </div>
         <div>
           <label className="text-xs font-semibold text-gray-500 uppercase">End Date</label>
-          <input 
-            type="date" 
+          <input
+            type="date"
             value={filterEndDate}
             onChange={(e) => setFilterEndDate(e.target.value)}
             className="w-full mt-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -264,7 +265,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
             ))}
           </tbody>
         </table>
-        
+
         <div className="flex items-center justify-between p-3 border-t bg-gray-50">
           <div className="text-gray-500 text-sm">
             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
