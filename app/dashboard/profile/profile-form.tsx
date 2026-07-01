@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 
-export function ProfileForm({ user }: { user: { id: string, name: string, email: string, team: string | null } }) {
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { APP_CONFIG } from "@/lib/config"
+
+export function ProfileForm({ user }: { user: { id: string, name: string, email: string, team: string | null, role: string } }) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -39,7 +42,20 @@ export function ProfileForm({ user }: { user: { id: string, name: string, email:
           </div>
           <div className="space-y-2">
             <Label>Team</Label>
-            <Input name="team" defaultValue={user.team || ""} />
+            {user.role === "ADMIN" || user.role === "SUPERADMIN" ? (
+              <Select name="team" defaultValue={user.team || ""}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a team" />
+                </SelectTrigger>
+                <SelectContent>
+                  {APP_CONFIG.PREDEFINED_TEAMS.map(team => (
+                    <SelectItem key={team} value={team}>{team}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input name="team" value={user.team || "No team assigned"} disabled />
+            )}
           </div>
           <div className="space-y-2">
             <Label>New Password (Optional)</Label>

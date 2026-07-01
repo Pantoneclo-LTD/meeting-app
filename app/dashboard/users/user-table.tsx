@@ -9,14 +9,13 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table'
 import { Button } from "@/components/ui/button"
-import { deleteUser, createUser } from "@/app/actions/user"
+import { deleteUser, createUser, updateUser, changeUserPassword } from "@/app/actions/user"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { APP_CONFIG } from "@/lib/config"
-import { changeUserPassword } from "@/app/actions/user"
 
 type UserRow = {
   id: string
@@ -31,8 +30,26 @@ const columnHelper = createColumnHelper<UserRow>()
 export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
   const [users, setUsers] = useState(initialUsers)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<UserRow | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [changePasswordUserId, setChangePasswordUserId] = useState<string | null>(null)
+
+  const handleEditUser = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!editingUser) return
+    setIsLoading(true)
+    const formData = new FormData(e.currentTarget)
+    try {
+      await updateUser(editingUser.id, formData)
+      toast.success("User updated successfully")
+      setEditingUser(null)
+      window.location.reload()
+    } catch (e: unknown) {
+      toast.error((e as Error).message || "Failed to update user")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -94,6 +111,7 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
       header: 'Actions',
       cell: info => (
         <div className="space-x-2">
+          <Button size="sm" variant="outline" onClick={() => setEditingUser(info.row.original)}>Edit</Button>
           <Button size="sm" variant="outline" onClick={() => setChangePasswordUserId(info.row.original.id)}>Change Password</Button>
           <Button size="sm" variant="destructive" onClick={() => handleDelete(info.row.original.id)}>Delete</Button>
         </div>
@@ -113,7 +131,7 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
     <div className="space-y-4">
       <div className="flex justify-end">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger>
+          <DialogTrigger asChild>
             <Button>Add New User</Button>
           </DialogTrigger>
           <DialogContent>
@@ -134,19 +152,6 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
                 <Input name="password" type="password" required minLength={6} />
               </div>
               <div className="space-y-2">
-                <Label>Team</Label>
-                <Select name="team">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select team" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {APP_CONFIG.PREDEFINED_TEAMS.map(team => (
-                      <SelectItem key={team} value={team}>{team}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
                 <Label>Role</Label>
                 <Select name="role" defaultValue="USER">
                   <SelectTrigger>
@@ -156,6 +161,19 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
                     <SelectItem value="USER">USER</SelectItem>
                     <SelectItem value="ADMIN">ADMIN</SelectItem>
                     <SelectItem value="SUPERADMIN">SUPERADMIN</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Team</Label>
+                <Select name="team">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select team" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {APP_CONFIG.PREDEFINED_TEAMS.map(team => (
+                      <SelectItem key={team} value={team}>{team}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -180,6 +198,55 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
                 {isLoading ? "Saving..." : "Change Password"}
               </Button>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+            </DialogHeader>
+            {editingUser && (
+              <form onSubmit={handleEditUser} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Name</Label>
+                  <Input name="name" defaultValue={editingUser.name} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input name="email" type="email" defaultValue={editingUser.email} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Role</Label>
+                  <Select name="role" defaultValue={editingUser.role}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USER">USER</SelectItem>
+                      <SelectItem value="ADMIN">ADMIN</SelectItem>
+                      <SelectItem value="SUPERADMIN">SUPERADMIN</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Team</Label>
+                  <Select name="team" defaultValue={editingUser.team || ""}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select team" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {APP_CONFIG.PREDEFINED_TEAMS.map(team => (
+                        <SelectItem key={team} value={team}>{team}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button type="submit" disabled={isLoading} className="w-full">
+                  {isLoading ? "Saving..." : "Save Changes"}
+                </Button>
+              </form>
+            )}
           </DialogContent>
         </Dialog>
       </div>

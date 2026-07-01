@@ -9,7 +9,7 @@ import { z } from "zod"
 const userSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
-  password: z.string().min(6).optional(),
+  password: z.string().min(6).optional().or(z.literal("")),
   team: z.string().optional(),
   role: z.enum(["SUPERADMIN", "ADMIN", "USER"]),
 })
@@ -87,7 +87,7 @@ export async function deleteUser(userId: string) {
 export async function getUsers() {
   const session = await auth()
   if (session?.user?.role !== "SUPERADMIN") throw new Error("Unauthorized")
-  
+
   return prisma.user.findMany({
     select: {
       id: true,
@@ -115,6 +115,6 @@ export async function changeUserPassword(userId: string, newPassword: string) {
     where: { id: userId },
     data: { password: hashedPassword }
   })
-  
+
   revalidatePath("/dashboard/users")
 }

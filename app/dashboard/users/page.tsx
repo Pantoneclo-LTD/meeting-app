@@ -10,7 +10,8 @@ export default async function UsersPage() {
   }
 
   const users = await getUsers()
-  const serializedUsers = users.map(u => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const serializedUsers = users.map((u: any) => ({
     ...u,
     createdAt: u.createdAt.toISOString()
   }))
