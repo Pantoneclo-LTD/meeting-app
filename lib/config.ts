@@ -1,4 +1,5 @@
 export const APP_CONFIG = {
+  SITE_NAME: "Matrix Meeting",
   DEFAULT_PREP_TIME_MINUTES: 10,
   PREDEFINED_TEAMS: [
     "Design",

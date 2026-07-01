@@ -1,20 +1,26 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { Header } from "@/components/header"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { cookies } from "next/headers";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+
+  // Persisting the sidebar state in the cookie.
+  const cookieStore = cookies();
+  const _cookieStore = await cookieStore
+  const defaultOpen = _cookieStore.get('sidebar_state')?.value == 'true';
+
   return (
-    <div className="flex h-screen overflow-hidden">
+    <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar />
-      <div className="flex-1 flex flex-col pl-64">
+      <SidebarInset>
         <Header />
-        <main className="flex-1 overflow-y-auto p-4 bg-gray-50/50">
-          {children}
-        </main>
-      </div>
-    </div>
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
