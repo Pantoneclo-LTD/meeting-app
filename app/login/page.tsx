@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import Image from "next/image"
+import { APP_CONFIG } from "@/lib/config"
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Please enter a valid email address."),
@@ -18,10 +20,10 @@ export default function LoginPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
 
-  const { 
-    register, 
-    handleSubmit, 
-    formState: { errors, isSubmitting } 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting }
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -49,7 +51,8 @@ export default function LoginPage() {
   return (
     <div className="flex h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md border">
-        <h2 className="text-2xl font-bold text-center mb-6">Meeting App Login</h2>
+        <div className="flex justify-center mb-2"><Image src="/icon.jpg" alt="Logo" width={100} height={100} /></div>
+        <h2 className="text-2xl font-bold text-center mb-4">{APP_CONFIG.SITE_NAME}</h2>
 
         {error && (
           <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">

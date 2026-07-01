@@ -1,36 +1,119 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Meeting App
+
+A comprehensive meeting room booking and management system built with Next.js 15, React 19, Prisma, Tailwind CSS, and NextAuth.js.
+
+## Features
+
+- **Role-Based Access Control**: Three distinct roles: `USER`, `ADMIN`, and `SUPERADMIN`.
+  - **User**: Can book meetings, view their own dashboard/history, and cancel their pending/approved bookings.
+  - **Admin**: Can approve or reject bookings and view system-wide dashboard metrics.
+  - **Superadmin**: Full system access. Can manage users, alter user roles/teams, and bulk delete/manage all bookings.
+- **Interactive Calendar**: FullCalendar integration allowing users to click and drag to book timeslots visually.
+- **Conflict Prevention**: Built-in logic prevents overlapping meetings and intelligently accounts for mandatory "preparation time" between meetings.
+- **Off-Days & Holidays**: Automatically blocks bookings on Fridays (off-days) and predefined public holidays.
+- **Email Notifications & Invites**: Automated SMTP emails via Nodemailer when a booking is requested, approved, or rejected. Approved bookings include a downloadable `.ics` calendar attachment.
+- **Cron Reminders**: A secure API endpoint designed to be triggered via Cron to send automated 30-minute reminder emails before meetings start.
+- **Dynamic Dashboard**: Beautiful UI featuring aggregated statistic cards, Tailwind CSS-based visual charts, a highlighted upcoming event hero widget, and a recent past events log.
+- **Exporting**: Export booking logs easily to Excel or PDF.
+
+## Prerequisites
+
+- Node.js 18+ (20+ recommended)
+- PostgreSQL Database
+- PM2 (Optional, for production deployment)
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone & Install Dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd meeting-app
+pnpm install
+```
+*(You can also use `npm install` or `yarn install`)*
+
+### 2. Environment Variables
+
+Create a `.env` file in the root directory and configure the following variables:
+
+```env
+# Database Connection (PostgreSQL)
+DATABASE_URL="postgresql://user:password@localhost:5432/meeting_app?schema=public"
+
+# NextAuth Secret (Generate one using: openssl rand -base64 32)
+AUTH_SECRET="your-super-secret-key"
+
+# Email Configuration (SMTP)
+SMTP_HOST="smtp.example.com"
+SMTP_PORT=587
+SMTP_USER="your-email@example.com"
+SMTP_PASS="your-email-password"
+SMTP_FROM="your-email@example.com"
+
+# Default SuperAdmin Credentials (used during DB Seed)
+SUPERADMIN_EMAIL="admin@example.com"
+SUPERADMIN_PASSWORD="superadminpassword"
+SUPERADMIN_NAME="Super Admin"
+
+# Application URL (Required for Email Links & NextAuth in Prod)
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Database Setup & Data Seeding
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Run the Prisma migrations to set up your database schema:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npx prisma migrate dev
+```
 
-## Learn More
+Next, seed the database to create the default Superadmin account (using the credentials specified in your `.env`):
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx prisma db seed
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. Run Development Server
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+pnpm dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser. You can log in with your Superadmin credentials.
 
-## Deploy on Vercel
+## Production Deployment (PM2)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This project includes an `ecosystem.config.js` file for seamless deployment using PM2.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 1. Build the Application
+
+```bash
+pnpm build
+```
+
+### 2. Start with PM2
+
+Start the application in cluster mode (utilizing maximum CPU cores):
+
+```bash
+pm2 start ecosystem.config.js --env production
+```
+
+### 3. Setup PM2 Startup Script
+
+To ensure the application restarts automatically on server reboots:
+
+```bash
+pm2 save
+pm2 startup
+```
+
+## Running the Reminder Cron Job
+
+The application exposes a secure endpoint at `/api/cron/reminders`.
+To trigger the 30-minute reminder emails automatically, set up a server cron job (e.g., using `crontab -e`) to ping the URL every minute:
+
+```bash
+* * * * * curl -s -H "Authorization: Bearer <YOUR_CRON_SECRET>" http://localhost:3000/api/cron/reminders > /dev/null
+```
+*(Make sure to match the `CRON_SECRET` env variable if you implemented one, or adjust the script as needed).*
