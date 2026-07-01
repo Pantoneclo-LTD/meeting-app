@@ -118,8 +118,17 @@ export async function createBooking(data: z.infer<typeof bookingSchema>) {
 
   // Send Email to Admins
   const admins = await prisma.user.findMany({
-    where: { role: "ADMIN" }
+    where: { role: { in: ["ADMIN", "SUPERADMIN"] } }
   })
+
+  if (admins.length > 0) {
+    await prisma.notification.createMany({
+      data: admins.map((admin: User) => ({
+        userId: admin.id,
+        message: `New booking request from ${session.user.name || 'User'} for ${parsed.purpose}.`
+      }))
+    })
+  }
 
   if (admins.length > 0) {
     const emailPromises = admins.map((admin: User) =>
@@ -162,6 +171,20 @@ export async function updateBookingStatus(bookingId: string, status: "APPROVED" 
   await prisma.booking.update({
     where: { id: bookingId },
     data: { status }
+  })
+
+  // Create in-app notification
+  const notificationMsg = status === "APPROVED" 
+    ? `Your booking for "${booking.purpose}" was approved.` 
+    : status === "REJECTED" 
+      ? `Your booking for "${booking.purpose}" was rejected.`
+      : `Your booking for "${booking.purpose}" was cancelled.`
+
+  await prisma.notification.create({
+    data: {
+      userId: booking.userId,
+      message: notificationMsg,
+    }
   })
 
   // Send email to user if status is APPROVED or REJECTED

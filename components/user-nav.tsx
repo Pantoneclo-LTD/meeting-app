@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { cn, getAvatarInitials } from '@/lib/utils';
-import { BadgeCheck, Bell, CreditCard, Settings } from 'lucide-react';
+import { BadgeCheck, Bell } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -75,11 +75,9 @@ export function UserNav() {
 
 export function UserNavGroup() {
 
-  const { data: session } = useSession();
-
   return (<DropdownMenuGroup>
     <DropdownMenuItem asChild>
-      <Link href={"/profile"}>
+      <Link href={"/dashboard/profile"}>
         <BadgeCheck />
         Profile
         <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>

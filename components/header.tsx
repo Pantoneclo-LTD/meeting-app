@@ -1,6 +1,7 @@
 "use client"
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/user-nav";
+import { NotificationBell } from "@/components/notification-bell";
 
 export function Header() {
   return (
@@ -9,6 +10,7 @@ export function Header() {
         <SidebarTrigger className="-ml-1 [&_svg]:size-5" />
       </div>
       <div className="flex items-center gap-2 px-4">
+        <NotificationBell />
         <UserNav />
       </div>
     </header>

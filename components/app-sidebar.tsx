@@ -65,7 +65,7 @@ export function AppSidebar() {
     {
       title: 'Dashboard',
       url: `/dashboard`,
-      icon: 'home',
+      icon: 'dashboard',
       isActive: false,
       shortcut: ['a', 'd'],
       items: [],
@@ -76,7 +76,7 @@ export function AppSidebar() {
     {
       title: 'Book Meeting',
       url: `/dashboard/calendar`,
-      icon: 'home',
+      icon: 'add',
       isActive: false,
       shortcut: ['b', 'm'],
       items: [],
@@ -84,7 +84,7 @@ export function AppSidebar() {
     {
       title: 'My Bookings',
       url: `/dashboard/bookings`,
-      icon: 'home',
+      icon: 'page',
       isActive: false,
       shortcut: ['m', 'b'],
       items: [],
@@ -95,7 +95,7 @@ export function AppSidebar() {
     bookingMenu.push({
       title: 'Manage Bookings',
       url: `/dashboard/manage-bookings`,
-      icon: 'home',
+      icon: 'kanban',
       isActive: false,
       shortcut: ['e', 'b'],
       items: [],
@@ -106,7 +106,7 @@ export function AppSidebar() {
     {
       title: 'Profile',
       url: `/dashboard/profile`,
-      icon: 'home',
+      icon: 'user',
       isActive: false,
       shortcut: ['m', 'p'],
       items: [],
@@ -117,7 +117,7 @@ export function AppSidebar() {
     userMenu.push({
       title: 'Manage Users',
       url: `/dashboard/users`,
-      icon: 'home',
+      icon: 'employee',
       isActive: false,
       shortcut: ['m', 'u'],
       items: [],

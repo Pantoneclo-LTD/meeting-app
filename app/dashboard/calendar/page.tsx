@@ -12,8 +12,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { AppSidebar } from "@/components/app-sidebar"
-import { Header } from "@/components/header"
 import dayjs from "dayjs"
 import { useSession } from "next-auth/react"
 import { APP_CONFIG } from "@/lib/config"
@@ -24,6 +22,10 @@ export default function CalendarPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [purpose, setPurpose] = useState("")
   const [preparationTime, setPreparationTime] = useState("10")
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedEvent, setSelectedEvent] = useState<any>(null)
+  const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false)
 
   const { data: session } = useSession()
   const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN"
@@ -92,6 +94,13 @@ export default function CalendarPage() {
     setIsDialogOpen(true)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleEventClick = (arg: { event: any }) => {
+    if (arg.event.display === "background") return
+    setSelectedEvent(arg.event)
+    setIsEventDetailsOpen(true)
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -142,6 +151,7 @@ export default function CalendarPage() {
             dayMaxEvents={true}
             datesSet={handleDatesSet}
             select={handleSelectSlot}
+            eventClick={handleEventClick}
             height="100%"
             allDaySlot={false}
             slotMinTime="08:00:00"
@@ -215,6 +225,53 @@ export default function CalendarPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEventDetailsOpen} onOpenChange={setIsEventDetailsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Booking Details</DialogTitle>
+          </DialogHeader>
+          {selectedEvent && (
+            <div className="space-y-4 mt-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Purpose</h3>
+                <p className="mt-1 text-base">{selectedEvent.extendedProps?.purpose || selectedEvent.title}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Start Time</h3>
+                  <p className="mt-1">{dayjs(selectedEvent.start).format('MMM D, YYYY h:mm A')}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">End Time</h3>
+                  <p className="mt-1">{dayjs(selectedEvent.end).format('MMM D, YYYY h:mm A')}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Booked By</h3>
+                  <p className="mt-1">{selectedEvent.extendedProps?.userName}</p>
+                  <p className="text-xs text-gray-500">{selectedEvent.extendedProps?.userEmail}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Status</h3>
+                  <div className="mt-1">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                      ${selectedEvent.extendedProps?.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                        selectedEvent.extendedProps?.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'}`}>
+                      {selectedEvent.extendedProps?.status || 'UNKNOWN'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end pt-4">
+                <Button variant="outline" onClick={() => setIsEventDetailsOpen(false)}>Close</Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
