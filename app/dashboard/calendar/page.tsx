@@ -70,11 +70,11 @@ export default function CalendarPage() {
   const selectAllow = (selectInfo: { start: Date, end: Date }) => {
     if (selectInfo.end <= new Date()) return false
     if (selectInfo.start.getDay() === 5 || selectInfo.end.getDay() === 5) return false
-    
+
     const startStr = dayjs(selectInfo.start).format('YYYY-MM-DD')
     const endStr = dayjs(selectInfo.end).format('YYYY-MM-DD')
     if (APP_CONFIG.BANGLADESH_HOLIDAYS.includes(startStr) || APP_CONFIG.BANGLADESH_HOLIDAYS.includes(endStr)) return false
-    
+
     return true
   }
 
@@ -94,10 +94,10 @@ export default function CalendarPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const start = new Date(customStartTime)
     const end = new Date(customEndTime)
-    
+
     if (start < new Date()) {
       return toast.error("Cannot book a meeting in the past.")
     }
@@ -122,42 +122,37 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <AppSidebar />
-      <div className="flex-1 flex flex-col pl-64">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-4 bg-gray-50/50">
-          <div className="bg-white p-4 rounded-lg shadow-sm border h-full flex flex-col">
-            <h1 className="text-2xl font-bold mb-4">Meeting Room Calendar</h1>
-            <div className="flex-1 min-h-[600px]">
-              <FullCalendar
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                initialView="timeGridWeek"
-                headerToolbar={{
-                  left: "prev,next today",
-                  center: "title",
-                  right: "dayGridMonth,timeGridWeek,timeGridDay"
-                }}
-                events={calendarEvents}
-                selectable={true}
-                selectAllow={selectAllow}
-                selectMirror={true}
-                dayMaxEvents={true}
-                datesSet={handleDatesSet}
-                select={handleSelectSlot}
-                height="100%"
-                allDaySlot={false}
-                slotMinTime="08:00:00"
-                slotMaxTime="20:00:00"
-                businessHours={{
-                  daysOfWeek: [0, 1, 2, 3, 4, 6], // Excludes Friday (5)
-                  startTime: '08:00',
-                  endTime: '20:00',
-                }}
-              />
-            </div>
-          </div>
-        </main>
+    <div>
+
+      <div className="p-4 h-full flex flex-col">
+        <h1 className="text-2xl font-bold mb-4">Meeting Room Calendar</h1>
+        <div className="flex-1 min-h-[600px]">
+          <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView="timeGridWeek"
+            headerToolbar={{
+              left: "prev,next today",
+              center: "title",
+              right: "dayGridMonth,timeGridWeek,timeGridDay"
+            }}
+            events={calendarEvents}
+            selectable={true}
+            selectAllow={selectAllow}
+            selectMirror={true}
+            dayMaxEvents={true}
+            datesSet={handleDatesSet}
+            select={handleSelectSlot}
+            height="100%"
+            allDaySlot={false}
+            slotMinTime="08:00:00"
+            slotMaxTime="20:00:00"
+            businessHours={{
+              daysOfWeek: [0, 1, 2, 3, 4, 6], // Excludes Friday (5)
+              startTime: '08:00',
+              endTime: '20:00',
+            }}
+          />
+        </div>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -169,32 +164,32 @@ export default function CalendarPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Start Time</Label>
-                <Input 
-                  type="datetime-local" 
-                  value={customStartTime} 
+                <Input
+                  type="datetime-local"
+                  value={customStartTime}
                   min={dayjs().format('YYYY-MM-DDTHH:mm')}
-                  onChange={e => setCustomStartTime(e.target.value)} 
-                  required 
+                  onChange={e => setCustomStartTime(e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2">
                 <Label>End Time</Label>
-                <Input 
-                  type="datetime-local" 
-                  value={customEndTime} 
+                <Input
+                  type="datetime-local"
+                  value={customEndTime}
                   min={customStartTime || dayjs().format('YYYY-MM-DDTHH:mm')}
-                  onChange={e => setCustomEndTime(e.target.value)} 
-                  required 
+                  onChange={e => setCustomEndTime(e.target.value)}
+                  required
                 />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label>Meeting Purpose</Label>
-              <Input 
-                value={purpose} 
-                onChange={e => setPurpose(e.target.value)} 
-                required 
+              <Input
+                value={purpose}
+                onChange={e => setPurpose(e.target.value)}
+                required
                 placeholder="E.g., Team Sync, Client Call"
               />
             </div>
@@ -202,12 +197,12 @@ export default function CalendarPage() {
             {isAdmin && (
               <div className="space-y-2">
                 <Label>Preparation Time (minutes)</Label>
-                <Input 
-                  type="number" 
+                <Input
+                  type="number"
                   min="0"
-                  value={preparationTime} 
-                  onChange={e => setPreparationTime(e.target.value)} 
-                  required 
+                  value={preparationTime}
+                  onChange={e => setPreparationTime(e.target.value)}
+                  required
                 />
                 <p className="text-xs text-gray-500">Buffer time added after the meeting.</p>
               </div>

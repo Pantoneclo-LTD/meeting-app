@@ -79,28 +79,12 @@ export function UserNavGroup() {
 
   return (<DropdownMenuGroup>
     <DropdownMenuItem asChild>
-      <Link href={"/account"}>
+      <Link href={"/profile"}>
         <BadgeCheck />
         Profile
         <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
       </Link>
     </DropdownMenuItem>
-    <DropdownMenuItem asChild>
-      <Link href={"/account/billing"}>
-        <CreditCard />
-        Billing
-        <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-      </Link>
-    </DropdownMenuItem>
-    <DropdownMenuItem asChild>
-      <Link href={"/account/settings"}>
-        <Settings />
-        Settings
-        <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-      </Link>
-    </DropdownMenuItem>
-
-
     <DropdownMenuItem asChild>
       <Link href={"/dashboard/notifications"}>
         <Bell />
@@ -112,7 +96,7 @@ export function UserNavGroup() {
 }
 
 
-function UserSignOutDropdownButton() {
+export function UserSignOutDropdownButton() {
   const router = useRouter()
 
   const handleSignOut = async () => {

@@ -39,6 +39,7 @@ import { getAvatarInitials } from '@/lib/utils';
 import Image from "next/image";
 import { APP_CONFIG } from "@/lib/config";
 import { Icons } from "@/components/icons";
+import { UserNavGroup, UserSignOutDropdownButton } from "@/components/user-nav";
 
 interface NavItem {
   title: string;
@@ -66,7 +67,7 @@ export function AppSidebar() {
       url: `/dashboard`,
       icon: 'home',
       isActive: false,
-      shortcut: ['a', 'h'],
+      shortcut: ['a', 'd'],
       items: [],
     },
   ];
@@ -77,7 +78,7 @@ export function AppSidebar() {
       url: `/dashboard/calendar`,
       icon: 'home',
       isActive: false,
-      shortcut: ['a', 'h'],
+      shortcut: ['b', 'm'],
       items: [],
     },
     {
@@ -85,7 +86,7 @@ export function AppSidebar() {
       url: `/dashboard/bookings`,
       icon: 'home',
       isActive: false,
-      shortcut: ['a', 'h'],
+      shortcut: ['m', 'b'],
       items: [],
     },
   ];
@@ -96,7 +97,7 @@ export function AppSidebar() {
       url: `/dashboard/manage-bookings`,
       icon: 'home',
       isActive: false,
-      shortcut: ['a', 'h'],
+      shortcut: ['e', 'b'],
       items: [],
     })
   }
@@ -107,15 +108,7 @@ export function AppSidebar() {
       url: `/dashboard/profile`,
       icon: 'home',
       isActive: false,
-      shortcut: ['a', 'h'],
-      items: [],
-    },
-    {
-      title: 'Settings',
-      url: `/dashboard/settings`,
-      icon: 'home',
-      isActive: false,
-      shortcut: ['a', 'h'],
+      shortcut: ['m', 'p'],
       items: [],
     },
   ]
@@ -126,7 +119,7 @@ export function AppSidebar() {
       url: `/dashboard/users`,
       icon: 'home',
       isActive: false,
-      shortcut: ['a', 'h'],
+      shortcut: ['m', 'u'],
       items: [],
     })
   }
@@ -316,9 +309,9 @@ export function AppSidebar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {/* <UserNavGroup />
+                <UserNavGroup />
                 <DropdownMenuSeparator />
-                <UserSignOutDropdownButton /> */}
+                <UserSignOutDropdownButton />
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
