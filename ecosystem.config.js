@@ -4,14 +4,10 @@ module.exports = {
       name: "meeting-app",
       script: "node_modules/next/dist/bin/next",
       args: "start",
-      instances: "max",
-      exec_mode: "cluster",
+      cwd: "/var/www/meeting-app",
       env: {
-        NODE_ENV: "development",
-      },
-      env_production: {
         NODE_ENV: "production",
-        PORT: 3000,
+        PORT: 3003,
       }
     }
   ]
