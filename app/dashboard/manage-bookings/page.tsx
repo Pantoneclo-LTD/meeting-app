@@ -13,7 +13,7 @@ export default async function ManageBookingsPage() {
     orderBy: { createdAt: 'desc' },
     include: {
       user: {
-        select: { name: true, email: true }
+        select: { name: true, email: true, team: true }
       }
     }
   })

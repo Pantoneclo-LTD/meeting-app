@@ -40,6 +40,8 @@ model Booking {
   preparationTime Int           @default(10)
   purpose         String
   status          BookingStatus @default(PENDING)
+  reminder30Sent  Boolean       @default(false)
+  reminder15Sent  Boolean       @default(false)
   userId          String
   user            User          @relation(fields: [userId], references: [id])
   createdAt       DateTime      @default(now())

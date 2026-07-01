@@ -9,6 +9,9 @@ import { Booking, User } from "@prisma/client"
 import { env } from "@/lib/env"
 import { APP_CONFIG } from "@/lib/config"
 import dayjs from "dayjs"
+import utc from "dayjs/plugin/utc"
+dayjs.extend(utc)
+import { getBookingStatusEmailHtml } from "@/lib/email-templates"
 
 const transport = nodemailer.createTransport({
   host: env.SMTP_HOST,
@@ -139,7 +142,10 @@ export async function updateBookingStatus(bookingId: string, status: "APPROVED" 
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
-  const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
+  const booking = await prisma.booking.findUnique({ 
+    where: { id: bookingId },
+    include: { user: true }
+  })
   if (!booking) throw new Error("Booking not found")
 
   // Only Admin/Superadmin can approve/reject. Users can only cancel their own.
@@ -157,6 +163,50 @@ export async function updateBookingStatus(bookingId: string, status: "APPROVED" 
     where: { id: bookingId },
     data: { status }
   })
+
+  // Send email to user if status is APPROVED or REJECTED
+  if ((status === "APPROVED" || status === "REJECTED") && booking.user.email) {
+    const attachments: { filename: string, content: string, contentType: string }[] = []
+    
+    if (status === "APPROVED") {
+      const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Meeting App//EN
+BEGIN:VEVENT
+UID:${booking.id}@meetingapp.local
+DTSTAMP:${dayjs().utc().format('YYYYMMDDTHHmmss\\Z')}
+DTSTART:${dayjs(booking.startTime).utc().format('YYYYMMDDTHHmmss\\Z')}
+DTEND:${dayjs(booking.endTime).utc().format('YYYYMMDDTHHmmss\\Z')}
+SUMMARY:${booking.purpose}
+DESCRIPTION:Your meeting room booking has been approved.
+END:VEVENT
+END:VCALENDAR`
+      
+      attachments.push({
+        filename: 'invite.ics',
+        content: icsContent,
+        contentType: 'text/calendar; charset="utf-8"; method=REQUEST'
+      })
+    }
+
+    try {
+      await transport.sendMail({
+        from: env.SMTP_FROM,
+        to: booking.user.email,
+        subject: `Meeting Booking ${status === "APPROVED" ? "Approved" : "Rejected"}`,
+        html: getBookingStatusEmailHtml(
+          booking.user.name, 
+          status, 
+          booking.purpose, 
+          booking.startTime, 
+          booking.endTime
+        ),
+        attachments
+      })
+    } catch (e) {
+      console.error("Failed to send status update email:", e)
+    }
+  }
 
   revalidatePath('/dashboard')
   revalidatePath('/calendar')

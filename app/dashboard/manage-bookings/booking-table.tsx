@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
+import { APP_CONFIG } from "@/lib/config"
 import {
   createColumnHelper,
   flexRender,
@@ -22,13 +23,50 @@ type BookingRow = {
   status: string
   startTime: string
   endTime: string
-  user: { name: string, email: string }
+  user: { name: string, email: string, team?: string | null }
 }
 
 const columnHelper = createColumnHelper<BookingRow>()
 
 export function BookingTable({ initialBookings }: { initialBookings: BookingRow[] }) {
   const [bookings, setBookings] = useState(initialBookings)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filterTeam, setFilterTeam] = useState("ALL")
+  const [filterStartDate, setFilterStartDate] = useState("")
+  const [filterEndDate, setFilterEndDate] = useState("")
+  const [filterStatus, setFilterStatus] = useState("ALL")
+
+  const filteredBookings = useMemo(() => {
+    return bookings.filter(b => {
+      // Search text
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        if (!b.user.name.toLowerCase().includes(query) && !b.purpose.toLowerCase().includes(query)) {
+          return false
+        }
+      }
+      
+      // Team filter
+      if (filterTeam !== "ALL" && b.user.team !== filterTeam) {
+        return false
+      }
+      
+      // Status filter
+      if (filterStatus !== "ALL" && b.status !== filterStatus) {
+        return false
+      }
+      
+      // Date range filter
+      if (filterStartDate) {
+        if (dayjs(b.startTime).isBefore(dayjs(filterStartDate), 'day')) return false
+      }
+      if (filterEndDate) {
+        if (dayjs(b.endTime).isAfter(dayjs(filterEndDate), 'day')) return false
+      }
+      
+      return true
+    })
+  }, [bookings, searchQuery, filterTeam, filterStartDate, filterEndDate, filterStatus])
 
   const handleStatusUpdate = async (id: string, status: "APPROVED" | "REJECTED" | "CANCELLED") => {
     try {
@@ -89,14 +127,14 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
   ]
 
   const table = useReactTable({
-    data: bookings,
+    data: filteredBookings,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   })
 
   const exportExcel = () => {
-    const ws = utils.json_to_sheet(bookings.map(b => ({
+    const ws = utils.json_to_sheet(filteredBookings.map(b => ({
       Date: dayjs(b.startTime).format("YYYY-MM-DD"),
       Time: `${dayjs(b.startTime).format("HH:mm")} - ${dayjs(b.endTime).format("HH:mm")}`,
       User: b.user.name,
@@ -112,7 +150,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
     const doc = new jsPDF()
     doc.text("Meeting Room Bookings", 14, 15)
     
-    const tableData = bookings.map(b => [
+    const tableData = filteredBookings.map(b => [
       dayjs(b.startTime).format("YYYY-MM-DD"),
       `${dayjs(b.startTime).format("HH:mm")} - ${dayjs(b.endTime).format("HH:mm")}`,
       b.user.name,
@@ -131,10 +169,73 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={exportExcel}>Export Excel</Button>
-        <Button variant="outline" onClick={exportPDF}>Export PDF</Button>
+      {/* Filter Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-white p-4 rounded-md border">
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase">Search</label>
+          <input 
+            type="text" 
+            placeholder="Name or Purpose..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full mt-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase">Team</label>
+          <select 
+            value={filterTeam} 
+            onChange={(e) => setFilterTeam(e.target.value)}
+            className="w-full mt-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="ALL">All Teams</option>
+            {APP_CONFIG.PREDEFINED_TEAMS.map(team => (
+              <option key={team} value={team}>{team}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase">Status</label>
+          <select 
+            value={filterStatus} 
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="w-full mt-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="ALL">All Status</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase">Start Date</label>
+          <input 
+            type="date" 
+            value={filterStartDate}
+            onChange={(e) => setFilterStartDate(e.target.value)}
+            className="w-full mt-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase">End Date</label>
+          <input 
+            type="date" 
+            value={filterEndDate}
+            onChange={(e) => setFilterEndDate(e.target.value)}
+            className="w-full mt-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
       </div>
+
+      <div className="flex justify-between items-center">
+        <span className="text-sm text-gray-500 font-medium">Showing {filteredBookings.length} booking(s)</span>
+        <div className="space-x-2">
+          <Button variant="outline" onClick={exportExcel}>Export Excel</Button>
+          <Button variant="outline" onClick={exportPDF}>Export PDF</Button>
+        </div>
+      </div>
+
       <div className="border rounded-md bg-white">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 border-b">
