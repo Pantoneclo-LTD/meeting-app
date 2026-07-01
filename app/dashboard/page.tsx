@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { NextMeetingWidget } from "./next-meeting-widget"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -25,6 +26,28 @@ export default async function DashboardPage() {
     totalBookings = await prisma.booking.count({ where: { userId: session.user.id } })
     pendingBookings = await prisma.booking.count({ where: { userId: session.user.id, status: "PENDING" } })
   }
+
+  // Fetch next upcoming meeting for the user
+  const nextMeeting = await prisma.booking.findFirst({
+    where: {
+      userId: session.user.id,
+      status: "APPROVED",
+      endTime: { gt: new Date() } // Still ongoing or in future
+    },
+    orderBy: { startTime: 'asc' },
+    select: { 
+      purpose: true, 
+      startTime: true, 
+      endTime: true,
+      user: { select: { name: true } }
+    }
+  })
+  
+  const serializedNextMeeting = nextMeeting ? {
+    ...nextMeeting,
+    startTime: nextMeeting.startTime.toISOString(),
+    endTime: nextMeeting.endTime.toISOString(),
+  } : null
 
   return (
     <div className="p-8 space-y-6">
@@ -64,6 +87,8 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         )}
+
+        <NextMeetingWidget meeting={serializedNextMeeting} />
       </div>
     </div>
   )

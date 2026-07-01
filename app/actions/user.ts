@@ -99,3 +99,22 @@ export async function getUsers() {
     }
   })
 }
+
+export async function changeUserPassword(userId: string, newPassword: string) {
+  const session = await auth()
+  if (!session || session.user.role !== "SUPERADMIN") {
+    throw new Error("Unauthorized")
+  }
+
+  if (newPassword.length < 6) {
+    throw new Error("Password must be at least 6 characters")
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10)
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword }
+  })
+  
+  revalidatePath("/dashboard/users")
+}

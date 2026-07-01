@@ -7,6 +7,8 @@ import { z } from "zod"
 import nodemailer from "nodemailer"
 import { Booking, User } from "@prisma/client"
 import { env } from "@/lib/env"
+import { APP_CONFIG } from "@/lib/config"
+import dayjs from "dayjs"
 
 const transport = nodemailer.createTransport({
   host: env.SMTP_HOST,
@@ -22,6 +24,15 @@ const bookingSchema = z.object({
   endTime: z.string().datetime(), // Expected in UTC
   preparationTime: z.number().int().min(0).default(10),
   purpose: z.string().min(2),
+}).refine((data) => {
+  const start = new Date(data.startTime)
+  const now = new Date()
+  now.setMinutes(now.getMinutes() - 1) // 1 min grace
+  return start >= now
+}, { message: "Cannot book a meeting in the past", path: ["startTime"] })
+  .refine((data) => new Date(data.startTime) < new Date(data.endTime), {
+  message: "End time must be after start time",
+  path: ["endTime"]
 })
 
 export async function createBooking(data: z.infer<typeof bookingSchema>) {
@@ -33,8 +44,16 @@ export async function createBooking(data: z.infer<typeof bookingSchema>) {
   const newEnd = new Date(parsed.endTime)
   const newEndWithPrep = new Date(newEnd.getTime() + parsed.preparationTime * 60000)
 
-  if (newStart >= newEnd) {
-    throw new Error("End time must be after start time")
+  // Friday check (0 = Sunday, 5 = Friday)
+  if (dayjs(newStart).day() === 5 || dayjs(newEnd).day() === 5) {
+    throw new Error("Cannot book a meeting on a Friday (Off Day)")
+  }
+
+  // Holiday check
+  const startDateStr = dayjs(newStart).format('YYYY-MM-DD')
+  const endDateStr = dayjs(newEnd).format('YYYY-MM-DD')
+  if (APP_CONFIG.BANGLADESH_HOLIDAYS.includes(startDateStr) || APP_CONFIG.BANGLADESH_HOLIDAYS.includes(endDateStr)) {
+    throw new Error("Cannot book a meeting on a Holiday")
   }
 
   // Find overlapping bookings

@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { APP_CONFIG } from "@/lib/config"
+import { changeUserPassword } from "@/app/actions/user"
 
 type UserRow = {
   id: string
@@ -30,6 +32,23 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
   const [users, setUsers] = useState(initialUsers)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [changePasswordUserId, setChangePasswordUserId] = useState<string | null>(null)
+
+  const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!changePasswordUserId) return
+    setIsLoading(true)
+    const formData = new FormData(e.currentTarget)
+    try {
+      await changeUserPassword(changePasswordUserId, formData.get("password") as string)
+      toast.success("Password changed successfully")
+      setChangePasswordUserId(null)
+    } catch (e: unknown) {
+      toast.error((e as Error).message || "Failed to change password")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this user?")) return
@@ -74,7 +93,10 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
       id: 'actions',
       header: 'Actions',
       cell: info => (
-        <Button size="sm" variant="destructive" onClick={() => handleDelete(info.row.original.id)}>Delete</Button>
+        <div className="space-x-2">
+          <Button size="sm" variant="outline" onClick={() => setChangePasswordUserId(info.row.original.id)}>Change Password</Button>
+          <Button size="sm" variant="destructive" onClick={() => handleDelete(info.row.original.id)}>Delete</Button>
+        </div>
       ),
     }),
   ]
@@ -112,7 +134,16 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
               </div>
               <div className="space-y-2">
                 <Label>Team</Label>
-                <Input name="team" />
+                <Select name="team">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select team" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {APP_CONFIG.PREDEFINED_TEAMS.map(team => (
+                      <SelectItem key={team} value={team}>{team}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Role</Label>
@@ -129,6 +160,23 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
               </div>
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? "Creating..." : "Create User"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog open={!!changePasswordUserId} onOpenChange={(open) => !open && setChangePasswordUserId(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Change User Password</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label>New Password</Label>
+                <Input name="password" type="password" required minLength={6} />
+              </div>
+              <Button type="submit" disabled={isLoading} className="w-full">
+                {isLoading ? "Saving..." : "Change Password"}
               </Button>
             </form>
           </DialogContent>

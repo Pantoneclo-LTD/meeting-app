@@ -15,19 +15,39 @@ import { toast } from "sonner"
 import { AppSidebar } from "@/components/app-sidebar"
 import { Header } from "@/components/header"
 import dayjs from "dayjs"
+import { useSession } from "next-auth/react"
+import { APP_CONFIG } from "@/lib/config"
 
 export default function CalendarPage() {
   const queryClient = useQueryClient()
   const [dateRange, setDateRange] = useState({ start: new Date().toISOString(), end: new Date().toISOString() })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null)
   const [purpose, setPurpose] = useState("")
   const [preparationTime, setPreparationTime] = useState("10")
+
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN"
 
   const { data: bookings = [] } = useQuery({
     queryKey: ["bookings", dateRange],
     queryFn: () => getBookingsForCalendar(dateRange.start, dateRange.end),
   })
+
+  const backgroundEvents = APP_CONFIG.BANGLADESH_HOLIDAYS.map(dateStr => ({
+    start: dateStr,
+    display: 'background',
+    backgroundColor: '#fee2e2', // light red
+    allDay: true,
+  }))
+
+  const pastEvent = {
+    start: '1970-01-01T00:00:00',
+    end: new Date().toISOString(),
+    display: 'background',
+    backgroundColor: '#f3f4f6', // gray-100
+  }
+
+  const calendarEvents = [...bookings, ...backgroundEvents, pastEvent]
 
   const createMutation = useMutation({
     mutationFn: createBooking,
@@ -36,7 +56,7 @@ export default function CalendarPage() {
       queryClient.invalidateQueries({ queryKey: ["bookings"] })
       setIsDialogOpen(false)
       setPurpose("")
-      setPreparationTime("10")
+      setPreparationTime(APP_CONFIG.DEFAULT_PREP_TIME_MINUTES.toString())
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to create booking")
@@ -47,19 +67,56 @@ export default function CalendarPage() {
     setDateRange({ start: arg.startStr, end: arg.endStr })
   }
 
-  const handleSelect = (arg: { start: Date, end: Date }) => {
-    setSelectedSlot({ start: arg.start, end: arg.end })
+  const selectAllow = (selectInfo: { start: Date, end: Date }) => {
+    if (selectInfo.end <= new Date()) return false
+    if (selectInfo.start.getDay() === 5 || selectInfo.end.getDay() === 5) return false
+    
+    const startStr = dayjs(selectInfo.start).format('YYYY-MM-DD')
+    const endStr = dayjs(selectInfo.end).format('YYYY-MM-DD')
+    if (APP_CONFIG.BANGLADESH_HOLIDAYS.includes(startStr) || APP_CONFIG.BANGLADESH_HOLIDAYS.includes(endStr)) return false
+    
+    return true
+  }
+
+  const [customStartTime, setCustomStartTime] = useState<string>("")
+  const [customEndTime, setCustomEndTime] = useState<string>("")
+
+  // Update custom times when a slot is clicked
+  const handleSelectSlot = (arg: { start: Date, end: Date }) => {
+    const toLocalFormat = (date: Date) => {
+      const pad = (n: number) => n.toString().padStart(2, '0')
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+    }
+    setCustomStartTime(toLocalFormat(arg.start))
+    setCustomEndTime(toLocalFormat(arg.end))
     setIsDialogOpen(true)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedSlot) return
+    
+    const start = new Date(customStartTime)
+    const end = new Date(customEndTime)
+    
+    if (start < new Date()) {
+      return toast.error("Cannot book a meeting in the past.")
+    }
+    if (start >= end) {
+      return toast.error("End time must be after start time.")
+    }
+    if (start.getDay() === 5 || end.getDay() === 5) {
+      return toast.error("Cannot book on a Friday.")
+    }
+    const startStr = dayjs(start).format('YYYY-MM-DD')
+    const endStr = dayjs(end).format('YYYY-MM-DD')
+    if (APP_CONFIG.BANGLADESH_HOLIDAYS.includes(startStr) || APP_CONFIG.BANGLADESH_HOLIDAYS.includes(endStr)) {
+      return toast.error("Cannot book on a holiday.")
+    }
 
     createMutation.mutate({
-      startTime: selectedSlot.start.toISOString(),
-      endTime: selectedSlot.end.toISOString(),
-      preparationTime: parseInt(preparationTime, 10) || 10,
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+      preparationTime: isAdmin ? (parseInt(preparationTime, 10) || APP_CONFIG.DEFAULT_PREP_TIME_MINUTES) : APP_CONFIG.DEFAULT_PREP_TIME_MINUTES,
       purpose,
     })
   }
@@ -81,16 +138,22 @@ export default function CalendarPage() {
                   center: "title",
                   right: "dayGridMonth,timeGridWeek,timeGridDay"
                 }}
-                events={bookings}
+                events={calendarEvents}
                 selectable={true}
+                selectAllow={selectAllow}
                 selectMirror={true}
                 dayMaxEvents={true}
                 datesSet={handleDatesSet}
-                select={handleSelect}
+                select={handleSelectSlot}
                 height="100%"
                 allDaySlot={false}
                 slotMinTime="08:00:00"
                 slotMaxTime="20:00:00"
+                businessHours={{
+                  daysOfWeek: [0, 1, 2, 3, 4, 6], // Excludes Friday (5)
+                  startTime: '08:00',
+                  endTime: '20:00',
+                }}
               />
             </div>
           </div>
@@ -103,11 +166,28 @@ export default function CalendarPage() {
             <DialogTitle>Book Meeting Room</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-            {selectedSlot && (
-              <div className="text-sm text-gray-500 mb-4 bg-gray-50 p-3 rounded">
-                <strong>Time:</strong> {dayjs(selectedSlot.start).format('MMM D, YYYY h:mm A')} - {dayjs(selectedSlot.end).format('h:mm A')}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Time</Label>
+                <Input 
+                  type="datetime-local" 
+                  value={customStartTime} 
+                  min={dayjs().format('YYYY-MM-DDTHH:mm')}
+                  onChange={e => setCustomStartTime(e.target.value)} 
+                  required 
+                />
               </div>
-            )}
+              <div className="space-y-2">
+                <Label>End Time</Label>
+                <Input 
+                  type="datetime-local" 
+                  value={customEndTime} 
+                  min={customStartTime || dayjs().format('YYYY-MM-DDTHH:mm')}
+                  onChange={e => setCustomEndTime(e.target.value)} 
+                  required 
+                />
+              </div>
+            </div>
             
             <div className="space-y-2">
               <Label>Meeting Purpose</Label>
@@ -119,17 +199,19 @@ export default function CalendarPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Preparation Time (minutes)</Label>
-              <Input 
-                type="number" 
-                min="0"
-                value={preparationTime} 
-                onChange={e => setPreparationTime(e.target.value)} 
-                required 
-              />
-              <p className="text-xs text-gray-500">Buffer time added after the meeting.</p>
-            </div>
+            {isAdmin && (
+              <div className="space-y-2">
+                <Label>Preparation Time (minutes)</Label>
+                <Input 
+                  type="number" 
+                  min="0"
+                  value={preparationTime} 
+                  onChange={e => setPreparationTime(e.target.value)} 
+                  required 
+                />
+                <p className="text-xs text-gray-500">Buffer time added after the meeting.</p>
+              </div>
+            )}
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
