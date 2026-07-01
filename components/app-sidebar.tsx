@@ -146,8 +146,8 @@ export function AppSidebar() {
         <div className="flex gap-2 py-2 text-sidebar-accent-foreground ">
           <Link href={`/`}>
             <Image
-              className="dark:invert group-data-[collapsible=icon]:hidden"
-              src="/logo.svg"
+              className="dark:invert group-data-[collapsible=icon]:hidden bg-black/70"
+              src="/logo.png"
               alt={APP_CONFIG.SITE_NAME}
               width={180}
               height={38}
@@ -156,7 +156,7 @@ export function AppSidebar() {
             />
             <Image
               className="dark:invert hidden group-data-[collapsible=icon]:block"
-              src="/logo-icon.svg"
+              src="/icon.jpg"
               alt={APP_CONFIG.SITE_NAME}
               width={38}
               height={38}
