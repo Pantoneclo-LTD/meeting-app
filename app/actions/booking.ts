@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import nodemailer from "nodemailer"
-import { Booking, User } from "@prisma/client"
+import type { Booking, User } from "@prisma/client"
 import { env } from "@/lib/env"
 import { APP_CONFIG } from "@/lib/config"
 import dayjs from "dayjs"
@@ -282,4 +282,32 @@ export async function getBookingsForCalendar(startStr: string, endStr: string) {
       color: b.status === "PENDING" ? "#f59e0b" : "#10b981", // Orange vs Green
     }
   })
+}
+
+export async function deleteBooking(bookingId: string) {
+  const session = await auth()
+  if (!session?.user?.id || session.user.role !== "SUPERADMIN") throw new Error("Unauthorized")
+
+  await prisma.booking.delete({
+    where: { id: bookingId }
+  })
+  
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/manage-bookings')
+  revalidatePath('/calendar')
+}
+
+export async function deleteBookings(bookingIds: string[]) {
+  const session = await auth()
+  if (!session?.user?.id || session.user.role !== "SUPERADMIN") throw new Error("Unauthorized")
+
+  await prisma.booking.deleteMany({
+    where: {
+      id: { in: bookingIds }
+    }
+  })
+  
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/manage-bookings')
+  revalidatePath('/calendar')
 }

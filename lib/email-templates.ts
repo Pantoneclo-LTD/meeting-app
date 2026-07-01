@@ -1,4 +1,5 @@
 import dayjs from "dayjs"
+import { APP_CONFIG } from "@/lib/config"
 
 export const getBookingStatusEmailHtml = (
   userName: string,
@@ -26,7 +27,7 @@ export const getBookingStatusEmailHtml = (
       
       <p style="font-size: 14px; color: #6b7280; text-align: center; margin-top: 30px;">
         Thank you,<br/>
-        Meeting App Team
+        ${APP_CONFIG.SITE_NAME}
       </p>
     </div>
   `
@@ -51,7 +52,7 @@ export const getReminderEmailHtml = (
 
       <p style="font-size: 14px; color: #6b7280; text-align: center; margin-top: 30px;">
         Thank you,<br/>
-        Meeting App Team
+        ${APP_CONFIG.SITE_NAME}
       </p>
     </div>
   `

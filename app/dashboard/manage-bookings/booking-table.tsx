@@ -11,7 +11,7 @@ import {
 } from '@tanstack/react-table'
 import dayjs from "dayjs"
 import { Button } from "@/components/ui/button"
-import { updateBookingStatus } from "@/app/actions/booking"
+import { updateBookingStatus, deleteBooking, deleteBookings } from "@/app/actions/booking"
 import { toast } from "sonner"
 import { utils, writeFile } from "xlsx"
 import jsPDF from "jspdf"
@@ -28,8 +28,9 @@ type BookingRow = {
 
 const columnHelper = createColumnHelper<BookingRow>()
 
-export function BookingTable({ initialBookings }: { initialBookings: BookingRow[] }) {
+export function BookingTable({ initialBookings, userRole }: { initialBookings: BookingRow[], userRole: string }) {
   const [bookings, setBookings] = useState(initialBookings)
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({})
   const [searchQuery, setSearchQuery] = useState("")
   const [filterTeam, setFilterTeam] = useState("ALL")
   const [filterStartDate, setFilterStartDate] = useState("")
@@ -78,7 +79,54 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
     }
   }
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this booking?")) return
+    try {
+      await deleteBooking(id)
+      setBookings(prev => prev.filter(b => b.id !== id))
+      toast.success("Booking deleted successfully")
+    } catch (e: unknown) {
+      toast.error((e as Error).message || "Failed to delete booking")
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    const selectedIds = Object.keys(rowSelection).filter(id => rowSelection[id])
+    if (selectedIds.length === 0) return
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} bookings?`)) return
+
+    try {
+      await deleteBookings(selectedIds)
+      setBookings(prev => prev.filter(b => !selectedIds.includes(b.id)))
+      setRowSelection({})
+      toast.success("Bookings deleted successfully")
+    } catch (e: unknown) {
+      toast.error((e as Error).message || "Failed to delete bookings")
+    }
+  }
+
   const columns = [
+    ...(userRole === "SUPERADMIN" ? [
+      columnHelper.display({
+        id: 'select',
+        header: ({ table }) => (
+          <input
+            type="checkbox"
+            className="rounded border-gray-300"
+            checked={table.getIsAllPageRowsSelected()}
+            onChange={table.getToggleAllPageRowsSelectedHandler()}
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            className="rounded border-gray-300"
+            checked={row.getIsSelected()}
+            onChange={row.getToggleSelectedHandler()}
+          />
+        ),
+      })
+    ] : []),
     columnHelper.accessor('user.name', {
       header: 'User',
       cell: info => info.getValue(),
@@ -115,11 +163,17 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
       id: 'actions',
       header: 'Actions',
       cell: info => {
-        if (info.row.original.status !== "PENDING") return null
         return (
           <div className="flex space-x-2">
-            <Button size="sm" variant="default" onClick={() => handleStatusUpdate(info.row.original.id, "APPROVED")}>Approve</Button>
-            <Button size="sm" variant="destructive" onClick={() => handleStatusUpdate(info.row.original.id, "REJECTED")}>Reject</Button>
+            {info.row.original.status === "PENDING" && (
+              <>
+                <Button size="sm" variant="default" onClick={() => handleStatusUpdate(info.row.original.id, "APPROVED")}>Approve</Button>
+                <Button size="sm" variant="destructive" onClick={() => handleStatusUpdate(info.row.original.id, "REJECTED")}>Reject</Button>
+              </>
+            )}
+            {userRole === "SUPERADMIN" && (
+              <Button size="sm" variant="destructive" onClick={() => handleDelete(info.row.original.id)}>Delete</Button>
+            )}
           </div>
         )
       },
@@ -130,6 +184,12 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
   const table = useReactTable({
     data: filteredBookings,
     columns,
+    state: {
+      rowSelection,
+    },
+    getRowId: row => row.id,
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   })
@@ -232,6 +292,11 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingRow[
       <div className="flex justify-between items-center">
         <span className="text-sm text-gray-500 font-medium">Showing {filteredBookings.length} booking(s)</span>
         <div className="space-x-2">
+          {userRole === "SUPERADMIN" && Object.keys(rowSelection).filter(id => rowSelection[id]).length > 0 && (
+            <Button variant="destructive" onClick={handleBulkDelete}>
+              Delete Selected ({Object.keys(rowSelection).filter(id => rowSelection[id]).length})
+            </Button>
+          )}
           <Button variant="outline" onClick={exportExcel}>Export Excel</Button>
           <Button variant="outline" onClick={exportPDF}>Export PDF</Button>
         </div>

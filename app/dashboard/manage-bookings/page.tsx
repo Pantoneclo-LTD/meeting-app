@@ -18,8 +18,8 @@ export default async function ManageBookingsPage() {
     }
   })
 
-  // Serialize dates to pass to client component safely
-  const serializedBookings = bookings.map(b => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const serializedBookings = bookings.map((b: any) => ({
     ...b,
     startTime: b.startTime.toISOString(),
     endTime: b.endTime.toISOString(),
@@ -30,7 +30,7 @@ export default async function ManageBookingsPage() {
   return (
     <div className="p-8 space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">Manage Bookings</h1>
-      <BookingTable initialBookings={serializedBookings} />
+      <BookingTable initialBookings={serializedBookings} userRole={session.user.role} />
     </div>
   )
 }
