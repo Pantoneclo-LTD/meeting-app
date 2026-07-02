@@ -3,12 +3,13 @@
 import { BookingDetailsDialog } from "@/components/booking-details-dialog"
 import { useRouter } from "next/navigation"
 
-export function BookingDialogWrapper({ 
-  booking, 
-  userRole, 
+export function BookingDialogWrapper({
+  booking,
+  userRole,
   currentUserId,
   baseRedirect
-}: { 
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   booking: any
   userRole: string
   currentUserId: string

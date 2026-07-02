@@ -44,6 +44,7 @@ model Booking {
   reminder15Sent  Boolean       @default(false)
   userId          String
   user            User          @relation(fields: [userId], references: [id])
+  notifications   Notification[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 }
@@ -54,5 +55,7 @@ model Notification {
   isRead    Boolean  @default(false)
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }

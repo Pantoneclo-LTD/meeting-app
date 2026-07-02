@@ -11,7 +11,7 @@ import { Users, CalendarCheck, Clock, BookMarked } from "lucide-react"
 
 export default async function DashboardPage() {
   const session = await auth()
-  
+
   if (!session) {
     redirect("/login")
   }
@@ -48,14 +48,14 @@ export default async function DashboardPage() {
       endTime: { gt: new Date() } // Still ongoing or in future
     },
     orderBy: { startTime: 'asc' },
-    select: { 
-      purpose: true, 
-      startTime: true, 
+    select: {
+      purpose: true,
+      startTime: true,
       endTime: true,
       user: { select: { name: true } }
     }
   })
-  
+
   const serializedNextMeeting = nextMeeting ? {
     ...nextMeeting,
     startTime: nextMeeting.startTime.toISOString(),
@@ -88,6 +88,8 @@ export default async function DashboardPage() {
   }))
 
   const isAdmin = session.user.role === "SUPERADMIN" || session.user.role === "ADMIN"
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let serializedUpcomingEvents: any[] = []
 
   if (isAdmin) {
@@ -107,6 +109,7 @@ export default async function DashboardPage() {
       }
     })
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     serializedUpcomingEvents = upcomingEvents.map((e: any) => ({
       ...e,
       startTime: e.startTime.toISOString(),
@@ -158,7 +161,7 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </Link>
-        
+
         <Link href={`${redirectBase}?status=PENDING`} className="block transition-all hover:-translate-y-0.5 hover:shadow-md rounded-xl">
           <Card className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -227,7 +230,7 @@ export default async function DashboardPage() {
       {isAdmin && (
         <UpcomingBookingsList bookings={serializedUpcomingEvents} />
       )}
-      
+
       <PastEventsList events={serializedPastEvents} />
     </div>
   )

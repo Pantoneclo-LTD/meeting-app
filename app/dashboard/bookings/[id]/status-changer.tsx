@@ -33,13 +33,12 @@ export function StatusChanger({
   if (!isAdmin) {
     return (
       <span
-        className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide border ${
-          status === "APPROVED"
+        className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide border ${status === "APPROVED"
             ? "bg-emerald-100/70 text-emerald-800 border-emerald-200/50"
             : status === "PENDING"
-            ? "bg-amber-100/70 text-amber-800 border-amber-200/50"
-            : "bg-rose-100/70 text-rose-800 border-rose-200/50"
-        }`}
+              ? "bg-amber-100/70 text-amber-800 border-amber-200/50"
+              : "bg-rose-100/70 text-rose-800 border-rose-200/50"
+          }`}
       >
         {status}
       </span>
@@ -53,8 +52,8 @@ export function StatusChanger({
       await updateBookingStatus(bookingId, pendingStatus)
       setStatus(pendingStatus)
       toast.success(`Booking status updated to ${pendingStatus}`)
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update booking status")
+    } catch {
+      toast.error("Failed to update booking status")
     } finally {
       setLoading(false)
       setConfirmOpen(false)

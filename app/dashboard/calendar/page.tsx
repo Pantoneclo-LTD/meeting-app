@@ -7,9 +7,8 @@ import dayGridPlugin from "@fullcalendar/daygrid"
 import timeGridPlugin from "@fullcalendar/timegrid"
 import interactionPlugin from "@fullcalendar/interaction"
 import { getBookingsForCalendar, createBooking } from "@/app/actions/booking"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import dayjs from "dayjs"
@@ -23,14 +22,12 @@ export default function CalendarPage() {
   const [dateRange, setDateRange] = useState({ start: new Date().toISOString(), end: new Date().toISOString() })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [purpose, setPurpose] = useState("")
-  const [preparationTime, setPreparationTime] = useState("10")
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedEvent, setSelectedEvent] = useState<any>(null)
   const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false)
 
   const { data: session } = useSession()
-  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN"
 
   const { data: bookings = [] } = useQuery({
     queryKey: ["bookings", dateRange],
@@ -60,7 +57,6 @@ export default function CalendarPage() {
       queryClient.invalidateQueries({ queryKey: ["bookings"] })
       setIsDialogOpen(false)
       setPurpose("")
-      setPreparationTime('0')
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to create booking")
@@ -241,11 +237,10 @@ export default function CalendarPage() {
                       required
                       placeholder="E.g., Team Sync, Client Call, Project Planning..."
                       rows={4}
-                      className={`w-full pl-10 pr-4 py-3 bg-white border rounded-lg text-sm font-medium text-gray-955 placeholder-slate-400 focus:outline-none resize-none transition-colors ${
-                        purpose.length > 255
-                          ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                          : "border-slate-200 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                      }`}
+                      className={`w-full pl-10 pr-4 py-3 bg-white border rounded-lg text-sm font-medium text-gray-955 placeholder-slate-400 focus:outline-none resize-none transition-colors ${purpose.length > 255
+                        ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                        : "border-slate-200 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                        }`}
                     />
                   </div>
                   <div className="flex justify-between items-center">
@@ -254,9 +249,8 @@ export default function CalendarPage() {
                     ) : (
                       <span />
                     )}
-                    <span className={`text-xs font-medium ml-auto ${
-                      purpose.length > 255 ? "text-red-500" : "text-slate-400"
-                    }`}>
+                    <span className={`text-xs font-medium ml-auto ${purpose.length > 255 ? "text-red-500" : "text-slate-400"
+                      }`}>
                       {purpose.length}/255
                     </span>
                   </div>

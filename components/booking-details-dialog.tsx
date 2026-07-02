@@ -30,6 +30,9 @@ import { cn } from "@/lib/utils"
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
+type StatusType = "APPROVED" | "REJECTED" | "CANCELLED" | null
+
+
 export function BookingDetailsDialog({
   isOpen,
   onClose,
@@ -40,6 +43,7 @@ export function BookingDetailsDialog({
 }: {
   isOpen: boolean
   onClose: () => void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   booking: any
   userRole?: string
   currentUserId?: string
@@ -48,7 +52,7 @@ export function BookingDetailsDialog({
   const [localStatus, setLocalStatus] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState<{
-    status: "APPROVED" | "REJECTED" | "CANCELLED" | null,
+    status: StatusType
     open: boolean
   }>({
     status: null,
@@ -90,8 +94,8 @@ export function BookingDetailsDialog({
         onStatusChange(confirmOpen.status)
       }
       onClose?.();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update booking status")
+    } catch {
+      toast.error("Failed to update booking status")
       setLocalStatus(originalStatus)
     } finally {
       setLoading(false)
@@ -162,8 +166,8 @@ export function BookingDetailsDialog({
                     <Select
                       value={currentStatusClean}
                       disabled={currentStatusClean === 'CANCELLED' || currentStatusClean === 'REJECTED'}
-                      onValueChange={(val: any) => {
-                        setConfirmOpen({ status: val, open: true })
+                      onValueChange={(val) => {
+                        setConfirmOpen({ status: val as StatusType, open: true })
                       }}
                     >
                       <SelectTrigger
