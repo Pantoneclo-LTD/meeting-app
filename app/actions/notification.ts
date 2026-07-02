@@ -11,10 +11,8 @@ export async function getNotifications() {
   return prisma.notification.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
-    include: {
-      booking: true
-    }
-  })
+    ...({ include: { booking: true } } as Record<string, unknown>)
+  }) as unknown as Promise<Array<import("@prisma/client").Notification & { booking?: import("@prisma/client").Booking | null }>>
 }
 
 export async function getUnreadNotificationCount() {
