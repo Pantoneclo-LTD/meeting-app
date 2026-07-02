@@ -146,7 +146,7 @@ export function AppSidebar() {
         <div className="flex gap-2 py-2 text-sidebar-accent-foreground ">
           <Link href={`/`}>
             <Image
-              className="dark:invert group-data-[collapsible=icon]:hidden bg-black/70"
+              className="dark:invert group-data-[collapsible=icon]:hidden"
               src="/logo.png"
               alt={APP_CONFIG.SITE_NAME}
               width={180}
