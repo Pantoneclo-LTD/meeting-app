@@ -193,9 +193,9 @@ export async function updateBookingStatus(bookingId: string, status: "APPROVED" 
 
   await prisma.notification.create({
     data: {
-      user: { connect: { id: booking.userId } },
+      userId: booking.userId,
       message: notificationMsg,
-      booking: { connect: { id: booking.id } },
+      bookingId: booking.id,
     }
   })
 
