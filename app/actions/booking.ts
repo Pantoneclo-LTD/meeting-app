@@ -195,7 +195,7 @@ export async function updateBookingStatus(bookingId: string, status: "APPROVED" 
     data: {
       userId: booking.userId,
       message: notificationMsg,
-      bookingId: booking.id,
+      ...({ bookingId: booking.id } as Record<string, unknown>),
     }
   })
 
