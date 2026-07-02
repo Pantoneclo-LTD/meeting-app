@@ -16,6 +16,8 @@ import { toast } from "sonner"
 import { utils, writeFile } from "xlsx"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
+import { Eye } from "lucide-react"
+import { BookingDetailsDialog } from "@/components/booking-details-dialog"
 
 type BookingRow = {
   id: string
@@ -28,14 +30,23 @@ type BookingRow = {
 
 const columnHelper = createColumnHelper<BookingRow>()
 
-export function BookingTable({ initialBookings, userRole }: { initialBookings: BookingRow[], userRole: string }) {
+export function BookingTable({
+  initialBookings,
+  userRole,
+  defaultStatus,
+}: {
+  initialBookings: BookingRow[]
+  userRole: string
+  defaultStatus?: string
+}) {
   const [bookings, setBookings] = useState(initialBookings)
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({})
   const [searchQuery, setSearchQuery] = useState("")
   const [filterTeam, setFilterTeam] = useState("ALL")
   const [filterStartDate, setFilterStartDate] = useState("")
   const [filterEndDate, setFilterEndDate] = useState("")
-  const [filterStatus, setFilterStatus] = useState("ALL")
+  const [filterStatus, setFilterStatus] = useState(defaultStatus || "ALL")
+  const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null)
 
   const filteredBookings = useMemo(() => {
     return bookings.filter(b => {
@@ -133,7 +144,10 @@ export function BookingTable({ initialBookings, userRole }: { initialBookings: B
     }),
     columnHelper.accessor('purpose', {
       header: 'Purpose',
-      cell: info => info.getValue(),
+      cell: info => {
+        const val = info.getValue() as string;
+        return val.length > 30 ? val.substring(0, 30) + '...' : val;
+      },
     }),
     columnHelper.accessor('startTime', {
       header: 'Date & Time',
@@ -165,6 +179,15 @@ export function BookingTable({ initialBookings, userRole }: { initialBookings: B
       cell: info => {
         return (
           <div className="flex space-x-2">
+            <Button
+              size="icon-sm"
+              variant="outline"
+              title="View Details"
+              onClick={() => setSelectedBooking(info.row.original)}
+              className="text-gray-500 hover:text-gray-900 border-gray-200 hover:border-gray-300"
+            >
+              <Eye className="size-4" />
+            </Button>
             {info.row.original.status === "PENDING" && (
               <>
                 <Button size="sm" variant="default" onClick={() => handleStatusUpdate(info.row.original.id, "APPROVED")}>Approve</Button>
@@ -341,6 +364,20 @@ export function BookingTable({ initialBookings, userRole }: { initialBookings: B
           </div>
         </div>
       </div>
+
+      <BookingDetailsDialog
+        isOpen={!!selectedBooking}
+        onClose={() => setSelectedBooking(null)}
+        booking={selectedBooking}
+        userRole={userRole}
+        currentUserId=""
+        onStatusChange={(newStatus) => {
+          if (!selectedBooking) return
+          const id = selectedBooking.id
+          setBookings(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b))
+          setSelectedBooking(prev => prev ? { ...prev, status: newStatus } : prev)
+        }}
+      />
     </div>
   )
 }

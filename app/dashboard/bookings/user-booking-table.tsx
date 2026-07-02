@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
   createColumnHelper,
   flexRender,
@@ -12,6 +12,10 @@ import dayjs from "dayjs"
 import { Button } from "@/components/ui/button"
 import { updateBookingStatus } from "@/app/actions/booking"
 import { toast } from "sonner"
+import { Eye } from "lucide-react"
+import { useRouter, usePathname } from "next/navigation"
+import { BookingDetailsDialog } from "@/components/booking-details-dialog"
+import { useSession } from "next-auth/react"
 
 type BookingRow = {
   id: string
@@ -19,12 +23,36 @@ type BookingRow = {
   status: string
   startTime: string
   endTime: string
+  user: {
+    name: string
+    email: string
+  }
 }
 
 const columnHelper = createColumnHelper<BookingRow>()
 
-export function UserBookingTable({ initialBookings }: { initialBookings: BookingRow[] }) {
+export function UserBookingTable({ 
+  initialBookings,
+  defaultOpenBooking = null,
+  userRole = "USER",
+  defaultStatus
+}: { 
+  initialBookings: BookingRow[]
+  defaultOpenBooking?: BookingRow | null
+  userRole?: string
+  defaultStatus?: string
+}) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const { data: session } = useSession()
   const [bookings, setBookings] = useState(initialBookings)
+  const [filterStatus, setFilterStatus] = useState(defaultStatus || "ALL")
+  const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(defaultOpenBooking)
+
+  const filteredBookings = useMemo(() => {
+    if (filterStatus === "ALL") return bookings
+    return bookings.filter(b => b.status === filterStatus)
+  }, [bookings, filterStatus])
 
   const handleCancel = async (id: string) => {
     if (!confirm("Are you sure you want to cancel this booking request?")) return
@@ -40,7 +68,10 @@ export function UserBookingTable({ initialBookings }: { initialBookings: Booking
   const columns = [
     columnHelper.accessor('purpose', {
       header: 'Purpose',
-      cell: info => info.getValue(),
+      cell: info => {
+        const val = info.getValue() as string;
+        return val.length > 30 ? val.substring(0, 30) + '...' : val;
+      },
     }),
     columnHelper.accessor('startTime', {
       header: 'Date & Time',
@@ -70,11 +101,24 @@ export function UserBookingTable({ initialBookings }: { initialBookings: Booking
       id: 'actions',
       header: 'Actions',
       cell: info => {
-        if (info.row.original.status !== "PENDING") return null
+        const booking = info.row.original
         return (
-          <Button size="sm" variant="outline" onClick={() => handleCancel(info.row.original.id)}>
-            Cancel Request
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="icon-sm"
+              variant="outline"
+              title="View Details"
+              onClick={() => setSelectedBooking(booking)}
+              className="text-gray-500 hover:text-gray-900 border-gray-200 hover:border-gray-300"
+            >
+              <Eye className="size-4" />
+            </Button>
+            {booking.status === "PENDING" && (
+              <Button size="sm" variant="outline" onClick={() => handleCancel(booking.id)}>
+                Cancel Request
+              </Button>
+            )}
+          </div>
         )
       },
     }),
@@ -82,7 +126,7 @@ export function UserBookingTable({ initialBookings }: { initialBookings: Booking
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: bookings,
+    data: filteredBookings,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -90,6 +134,20 @@ export function UserBookingTable({ initialBookings }: { initialBookings: Booking
 
   return (
     <div className="space-y-4">
+      <div className="flex gap-2 bg-white p-3 rounded-lg border border-gray-100 max-w-xs shadow-xs">
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="block w-full rounded-md border border-gray-200 bg-white py-1.5 pl-3 pr-8 text-xs font-semibold text-gray-955 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        >
+          <option value="ALL">All Bookings</option>
+          <option value="PENDING">Pending</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+      </div>
+
       <div className="border rounded-md bg-white">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 border-b">
@@ -136,6 +194,22 @@ export function UserBookingTable({ initialBookings }: { initialBookings: Booking
           </div>
         </div>
       </div>
+
+      <BookingDetailsDialog
+        isOpen={!!selectedBooking}
+        onClose={() => {
+          setSelectedBooking(null)
+          router.replace(pathname, { scroll: false })
+        }}
+        booking={selectedBooking}
+        userRole={userRole}
+        currentUserId={session?.user?.id}
+        onStatusChange={(newStatus) => {
+          if (selectedBooking) {
+            setBookings(prev => prev.map(b => b.id === selectedBooking.id ? { ...b, status: newStatus } : b))
+          }
+        }}
+      />
     </div>
   )
 }

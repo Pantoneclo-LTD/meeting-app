@@ -1,6 +1,6 @@
 "use client"
 
-import type { Notification } from "@prisma/client"
+import type { Notification, Booking } from "@prisma/client"
 import { Check, Trash2 } from "lucide-react"
 import { markAsRead, markAllAsRead, deleteNotification } from "@/app/actions/notification"
 import { Button } from "@/components/ui/button"
@@ -8,10 +8,18 @@ import { useTransition } from "react"
 import { toast } from "sonner"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
+import utc from "dayjs/plugin/utc"
+import timezone from "dayjs/plugin/timezone"
 
 dayjs.extend(relativeTime)
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
-export function NotificationList({ notifications }: { notifications: Notification[] }) {
+type NotificationWithBooking = Notification & {
+  booking?: Booking | null
+}
+
+export function NotificationList({ notifications }: { notifications: NotificationWithBooking[] }) {
   const [isPending, startTransition] = useTransition()
 
   if (notifications.length === 0) {
@@ -48,9 +56,27 @@ export function NotificationList({ notifications }: { notifications: Notificatio
             className={`p-4 rounded-lg border flex items-start justify-between transition-colors ${notif.isRead ? "bg-white text-gray-600" : "bg-blue-50/50 border-blue-100 text-gray-900"
               }`}
           >
-            <div className="flex flex-col gap-1 pr-4">
-              <p className="text-sm">{notif.message}</p>
-              <p className="text-xs text-gray-400">{dayjs(notif.createdAt).fromNow()}</p>
+            <div className="flex flex-col gap-1 pr-4 flex-1">
+              <p className="text-sm font-semibold">{notif.message}</p>
+              {notif.booking && (
+                <div className="mt-2 text-xs border rounded-lg p-2.5 space-y-1.5 bg-white/70 shadow-2xs border-slate-100 max-w-xl">
+                  <div>
+                    <span className="font-semibold text-slate-500">Purpose:</span>{" "}
+                    <span className="font-bold text-slate-900">{notif.booking.purpose}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:gap-4 gap-1">
+                    <div>
+                      <span className="font-semibold text-slate-500">Start Time:</span>{" "}
+                      <span className="text-slate-800 font-medium">{dayjs(notif.booking.startTime).tz("Asia/Dhaka").format("MMM D, YYYY h:mm A")} BST</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-500">End Time:</span>{" "}
+                      <span className="text-slate-800 font-medium">{dayjs(notif.booking.endTime).tz("Asia/Dhaka").format("MMM D, YYYY h:mm A")} BST</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <p className="text-xs text-gray-400 mt-1">{dayjs(notif.createdAt).fromNow()}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {!notif.isRead && (

@@ -4,6 +4,9 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dayjs from "dayjs"
 import { Clock } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Progress } from "@/components/ui/progress"
+import { cn } from "@/lib/utils"
 
 type NextMeetingProps = {
   meeting: {
@@ -39,11 +42,11 @@ export function NextMeetingWidget({ meeting }: NextMeetingProps) {
   const startTime = dayjs(meeting.startTime)
   const endTime = dayjs(meeting.endTime)
   const totalDuration = endTime.diff(startTime)
-  
+
   // Calculate time until meeting starts
   const timeUntilStart = startTime.diff(dayjs(now))
   const isStarted = timeUntilStart <= 0
-  
+
   // Calculate time remaining in meeting (if started)
   const timeRemainingInMeeting = endTime.diff(dayjs(now))
   const isEnded = timeRemainingInMeeting <= 0
@@ -66,7 +69,7 @@ export function NextMeetingWidget({ meeting }: NextMeetingProps) {
     const hoursLeft = Math.floor(timeUntilStart / 3600000)
     const minutesLeft = Math.floor((timeUntilStart % 3600000) / 60000)
     const secondsLeft = Math.floor((timeUntilStart % 60000) / 1000)
-    
+
     if (hoursLeft > 0) {
       statusText = `Starts in ${hoursLeft}h ${minutesLeft}m`
     } else {
@@ -78,9 +81,9 @@ export function NextMeetingWidget({ meeting }: NextMeetingProps) {
   }
 
   return (
-    <Card className={`col-span-full shadow-lg overflow-hidden border-0 ${isAlert ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'}`}>
-      <CardHeader className="pb-2 border-b border-white/20 bg-black/10">
-        <CardTitle className="text-xl font-bold flex items-center justify-between">
+    <Card className={`col-span-full shadow-lg overflow-hidden border-0 space-y-1 [--card-spacing:0] ${isAlert ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'}`}>
+      <CardHeader className="p-4 pb-3 space-y-0 border-b border-white/20 bg-black/10">
+        <CardTitle className="text-xl pb-3 font-bold flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
               <Clock className="h-6 w-6 text-white" />
@@ -94,7 +97,7 @@ export function NextMeetingWidget({ meeting }: NextMeetingProps) {
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-6">
+      <CardContent className="p-4 pt-0">
         <div className="flex justify-between items-center mb-2">
           <div className="flex flex-col">
             <span className="text-sm text-white/70 font-medium uppercase tracking-wider">Start Time</span>
@@ -109,31 +112,32 @@ export function NextMeetingWidget({ meeting }: NextMeetingProps) {
             <span className="text-2xl font-bold">{endTime.format('h:mm A')}</span>
           </div>
         </div>
-        
-        {/* Interactive Progress Bar with Popover */}
-        <div className="relative group cursor-help mt-6">
-          {/* Custom Popover */}
-          <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-white text-gray-900 text-sm rounded-lg shadow-2xl pointer-events-none z-10 flex flex-col space-y-2 border">
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 border-8 border-transparent border-t-white drop-shadow-md" />
-            <p><span className="text-gray-500 font-semibold">Name:</span> <span className="font-medium">{meeting.user?.name || "Unknown"}</span></p>
-            <p><span className="text-gray-500 font-semibold">Purpose:</span> <span className="font-medium">{meeting.purpose}</span></p>
-            <div className="h-px bg-gray-100 my-1"></div>
-            <p><span className="text-gray-500 font-semibold">Start:</span> {startTime.format('MMM D, YYYY h:mm A')}</p>
-            <p><span className="text-gray-500 font-semibold">End:</span> {endTime.format('MMM D, YYYY h:mm A')}</p>
-          </div>
 
-          <div className="h-6 w-full bg-black/10 rounded-full overflow-hidden border border-white/20 backdrop-blur-sm shadow-inner">
-            <div 
-              className={`h-full transition-all duration-1000 ease-linear ${isStarted ? 'bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]' : 'bg-white/40'}`}
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+        {/* Interactive Progress Bar with Popover */}
+        <div className="mt-6">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="cursor-help">
+                <Progress
+                  value={progressPercent}
+                  className={cn("h-3 w-full bg-black/10 border border-white/20 backdrop-blur-sm shadow-inner [&_[data-slot=progress-indicator]]:transition-all [&_[data-slot=progress-indicator]]:duration-1000 [&_[data-slot=progress-indicator]]:ease-linear",
+                    isStarted ? "[&_[data-slot=progress-indicator]]:bg-white [&_[data-slot=progress-indicator]]:shadow-[0_0_10px_rgba(255,255,255,0.8)]" : "[&_[data-slot=progress-indicator]]:bg-white/40"
+                  )}
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="w-72 p-4 bg-white text-gray-900 text-sm rounded-lg shadow-xl border z-50 flex flex-col space-y-2">
+              <p><span className="text-gray-500 font-semibold">Name:</span> <span className="font-medium">{meeting.user?.name || "Unknown"}</span></p>
+              <p><span className="text-gray-500 font-semibold">Purpose:</span> <span className="font-medium">{meeting.purpose}</span></p>
+              <div className="h-px bg-gray-100 my-1"></div>
+              <div>
+                <p><span className="text-gray-500 font-semibold">Start:</span> {startTime.format('MMM D, YYYY h:mm A')}</p>
+                <p><span className="text-gray-500 font-semibold">End:</span> {endTime.format('MMM D, YYYY h:mm A')}</p>
+              </div>
+            </TooltipContent>
+          </Tooltip>
         </div>
-        {!isStarted && !isEnded && (
-          <p className="text-sm text-white/70 mt-3 text-center font-medium">
-            The progress bar will fill once the meeting begins.
-          </p>
-        )}
+
       </CardContent>
     </Card>
   )

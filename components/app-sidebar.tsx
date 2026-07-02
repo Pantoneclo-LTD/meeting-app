@@ -74,7 +74,7 @@ export function AppSidebar() {
 
   const bookingMenu: NavItem[] = [
     {
-      title: 'Book Meeting',
+      title: 'Book Studio',
       url: `/dashboard/calendar`,
       icon: 'add',
       isActive: false,

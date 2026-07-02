@@ -10,8 +10,10 @@ import { env } from "@/lib/env"
 import { APP_CONFIG } from "@/lib/config"
 import dayjs from "dayjs"
 import utc from "dayjs/plugin/utc"
+import timezone from "dayjs/plugin/timezone"
 dayjs.extend(utc)
-import { getBookingStatusEmailHtml } from "@/lib/email-templates"
+dayjs.extend(timezone)
+import { getBookingStatusEmailHtml, getNewBookingAdminEmailHtml } from "@/lib/email-templates"
 
 const transport = nodemailer.createTransport({
   host: env.SMTP_HOST,
@@ -125,20 +127,29 @@ export async function createBooking(data: z.infer<typeof bookingSchema>) {
     await prisma.notification.createMany({
       data: admins.map((admin: User) => ({
         userId: admin.id,
-        message: `New booking request from ${session.user.name || 'User'} for ${parsed.purpose}.`
+        message: `New booking request from ${session.user.name || 'User'} for ${parsed.purpose}.`,
+        bookingId: booking.id
       }))
     })
   }
 
   if (admins.length > 0) {
-    const emailPromises = admins.map((admin: User) =>
-      transport.sendMail({
+    const emailPromises = admins.map((admin: User) => {
+      const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/bookings/${booking.id}`
+      return transport.sendMail({
         from: env.SMTP_FROM,
         to: admin.email,
         subject: "New Meeting Room Booking Request",
-        text: `A new booking request has been submitted by ${booking.user.name} for ${parsed.purpose}. \n\nTime: ${newStart.toUTCString()} to ${newEnd.toUTCString()} \n\nPlease log in to approve or reject.`
+        html: getNewBookingAdminEmailHtml(
+          admin.name || "Admin",
+          booking.user.name || "User",
+          parsed.purpose,
+          newStart,
+          newEnd,
+          bookingUrl
+        )
       })
-    )
+    })
     await Promise.allSettled(emailPromises)
   }
 
@@ -174,9 +185,9 @@ export async function updateBookingStatus(bookingId: string, status: "APPROVED" 
   })
 
   // Create in-app notification
-  const notificationMsg = status === "APPROVED" 
-    ? `Your booking for "${booking.purpose}" was approved.` 
-    : status === "REJECTED" 
+  const notificationMsg = status === "APPROVED"
+    ? `Your booking for "${booking.purpose}" was approved.`
+    : status === "REJECTED"
       ? `Your booking for "${booking.purpose}" was rejected.`
       : `Your booking for "${booking.purpose}" was cancelled.`
 
@@ -184,8 +195,13 @@ export async function updateBookingStatus(bookingId: string, status: "APPROVED" 
     data: {
       userId: booking.userId,
       message: notificationMsg,
+      bookingId: booking.id,
     }
   })
+
+
+  // generate booking url
+  const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/bookings/${booking.id}`
 
   // Send email to user if status is APPROVED or REJECTED
   if ((status === "APPROVED" || status === "REJECTED") && booking.user.email) {
@@ -218,11 +234,12 @@ END:VCALENDAR`
         to: booking.user.email,
         subject: `Meeting Booking ${status === "APPROVED" ? "Approved" : "Rejected"}`,
         html: getBookingStatusEmailHtml(
-          booking.user.name,
+          booking.user.name || "User",
           status,
           booking.purpose,
           booking.startTime,
-          booking.endTime
+          booking.endTime,
+          bookingUrl
         ),
         attachments
       })
@@ -274,6 +291,7 @@ export async function getBookingsForCalendar(startStr: string, endStr: string) {
       start: b.startTime.toISOString(),
       end: b.endTime.toISOString(), // Standard end time
       extendedProps: {
+        userId: b.userId,
         prepEnd: endWithPrep.toISOString(),
         status: b.status,
         purpose: canView ? b.purpose : null,
@@ -291,7 +309,7 @@ export async function deleteBooking(bookingId: string) {
   await prisma.booking.delete({
     where: { id: bookingId }
   })
-  
+
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/manage-bookings')
   revalidatePath('/calendar')
@@ -306,7 +324,7 @@ export async function deleteBookings(bookingIds: string[]) {
       id: { in: bookingIds }
     }
   })
-  
+
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/manage-bookings')
   revalidatePath('/calendar')
