@@ -11,8 +11,8 @@ export async function getNotifications() {
   return prisma.notification.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
-    ...({ include: { booking: true } } as Record<string, unknown>)
-  }) as unknown as Promise<Array<import("@prisma/client").Notification & { booking?: import("@prisma/client").Booking | null }>>
+    include: { booking: true }
+  })
 }
 
 export async function getUnreadNotificationCount() {
@@ -20,7 +20,7 @@ export async function getUnreadNotificationCount() {
   if (!session?.user?.id) return 0
 
   return prisma.notification.count({
-    where: { 
+    where: {
       userId: session.user.id,
       isRead: false
     }
@@ -35,7 +35,7 @@ export async function markAsRead(id: string) {
     where: { id, userId: session.user.id },
     data: { isRead: true }
   })
-  
+
   revalidatePath("/dashboard/notifications")
 }
 
@@ -47,7 +47,7 @@ export async function markAllAsRead() {
     where: { userId: session.user.id, isRead: false },
     data: { isRead: true }
   })
-  
+
   revalidatePath("/dashboard/notifications")
 }
 
@@ -58,6 +58,6 @@ export async function deleteNotification(id: string) {
   await prisma.notification.delete({
     where: { id, userId: session.user.id }
   })
-  
+
   revalidatePath("/dashboard/notifications")
 }
