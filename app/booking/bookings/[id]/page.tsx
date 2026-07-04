@@ -34,10 +34,10 @@ export default async function BookingDetailPage({ params }: { params: Promise<Ro
     booking.userId === session.user.id
 
   if (!isAuthorized) {
-    redirect("/dashboard/bookings")
+    redirect("/booking/bookings")
   }
 
-  const baseRedirect = session.user.role === "USER" ? "/dashboard/bookings" : "/dashboard/manage-bookings"
+  const baseRedirect = session.user.role === "USER" ? "/booking/bookings" : "/booking/manage-bookings"
 
   // Serialize booking to pass to client component safely
   const serializedBooking = {

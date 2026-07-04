@@ -124,7 +124,7 @@ export default async function DashboardPage() {
     { name: "Cancelled", value: cancelledBookings, color: "bg-gray-400" },
   ]
 
-  const redirectBase = isAdmin ? "/dashboard/manage-bookings" : "/dashboard/bookings"
+  const redirectBase = isAdmin ? "/booking/manage-bookings" : "/booking/bookings"
 
   return (
     <div className="p-8 space-y-8 bg-gray-50/50 min-h-screen">
@@ -137,7 +137,7 @@ export default async function DashboardPage() {
         </div>
         <div>
           <Link
-            href="/dashboard/calendar"
+            href="/booking/calendar"
             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#5B3EFA] to-[#AF2DF4] hover:opacity-95 text-white font-extrabold text-sm rounded-lg shadow-md transition-all tracking-wide"
           >
             <span className="text-lg font-black leading-none">+</span>
@@ -211,7 +211,7 @@ export default async function DashboardPage() {
         </Link>
 
         {session.user.role === "SUPERADMIN" && (
-          <Link href="/dashboard/users" className="block transition-all hover:-translate-y-0.5 hover:shadow-md rounded-xl">
+          <Link href="/booking/users" className="block transition-all hover:-translate-y-0.5 hover:shadow-md rounded-xl">
             <Card className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-semibold text-gray-500">Total Users</CardTitle>

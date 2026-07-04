@@ -13,7 +13,7 @@ export function NotificationBell() {
   })
 
   return (
-    <Link href="/dashboard/notifications" className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center">
+    <Link href="/booking/notifications" className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center">
       <Bell className="h-5 w-5 text-gray-600 dark:text-gray-300" />
       {unreadCount > 0 && (
         <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">

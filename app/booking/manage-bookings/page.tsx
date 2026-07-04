@@ -14,7 +14,7 @@ export default async function ManageBookingsPage({
 }) {
   const session = await auth()
   if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN")) {
-    redirect("/dashboard")
+    redirect("/booking")
   }
 
   const { status } = await searchParams

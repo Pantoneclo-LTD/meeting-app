@@ -77,14 +77,14 @@ export function UserNavGroup() {
 
   return (<DropdownMenuGroup>
     <DropdownMenuItem asChild>
-      <Link href={"/dashboard/profile"}>
+      <Link href={"/booking/profile"}>
         <BadgeCheck />
         Profile
         <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
       </Link>
     </DropdownMenuItem>
     <DropdownMenuItem asChild>
-      <Link href={"/dashboard/notifications"}>
+      <Link href={"/booking/notifications"}>
         <Bell />
         Notifications
         <DropdownMenuShortcut>⌘N</DropdownMenuShortcut>

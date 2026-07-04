@@ -35,7 +35,7 @@ export async function createUser(formData: FormData) {
     }
   })
 
-  revalidatePath('/dashboard/users')
+  revalidatePath('/booking/users')
 }
 
 export async function updateUser(userId: string, formData: FormData) {
@@ -67,8 +67,8 @@ export async function updateUser(userId: string, formData: FormData) {
     data: dataToUpdate
   })
 
-  revalidatePath('/dashboard/users')
-  revalidatePath('/dashboard/profile')
+  revalidatePath('/booking/users')
+  revalidatePath('/booking/profile')
 }
 
 export async function deleteUser(userId: string) {
@@ -81,7 +81,7 @@ export async function deleteUser(userId: string) {
     where: { id: userId }
   })
 
-  revalidatePath('/dashboard/users')
+  revalidatePath('/booking/users')
 }
 
 export async function getUsers() {
@@ -116,5 +116,5 @@ export async function changeUserPassword(userId: string, newPassword: string) {
     data: { password: hashedPassword }
   })
 
-  revalidatePath("/dashboard/users")
+  revalidatePath("/booking/users")
 }

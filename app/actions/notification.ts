@@ -36,7 +36,7 @@ export async function markAsRead(id: string) {
     data: { isRead: true }
   })
 
-  revalidatePath("/dashboard/notifications")
+  revalidatePath("/booking/notifications")
 }
 
 export async function markAllAsRead() {
@@ -48,7 +48,7 @@ export async function markAllAsRead() {
     data: { isRead: true }
   })
 
-  revalidatePath("/dashboard/notifications")
+  revalidatePath("/booking/notifications")
 }
 
 export async function deleteNotification(id: string) {
@@ -59,5 +59,5 @@ export async function deleteNotification(id: string) {
     where: { id, userId: session.user.id }
   })
 
-  revalidatePath("/dashboard/notifications")
+  revalidatePath("/booking/notifications")
 }

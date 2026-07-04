@@ -6,7 +6,7 @@ import { UserTable } from "./user-table"
 export default async function UsersPage() {
   const session = await auth()
   if (!session || session.user.role !== "SUPERADMIN") {
-    redirect("/dashboard")
+    redirect("/booking")
   }
 
   const users = await getUsers()

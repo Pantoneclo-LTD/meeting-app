@@ -5,12 +5,12 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth
   const pathname = req.nextUrl.pathname
   const isAuthPage = pathname.startsWith('/login')
-  const isDashboardPage = pathname.startsWith('/dashboard') || pathname.startsWith('/calendar')
+  const isBookingPage = pathname.startsWith('/booking') || pathname.startsWith('/calendar')
   const isHomePage = pathname === '/'
 
   if (isHomePage) {
     if (isLoggedIn) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      return NextResponse.redirect(new URL('/booking', req.url))
     } else {
       return NextResponse.redirect(new URL('/login', req.url))
     }
@@ -18,12 +18,12 @@ export default auth((req) => {
 
   if (isAuthPage) {
     if (isLoggedIn) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      return NextResponse.redirect(new URL('/booking', req.url))
     }
     return NextResponse.next()
   }
 
-  if (!isLoggedIn && isDashboardPage) {
+  if (!isLoggedIn && isBookingPage) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 

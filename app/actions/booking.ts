@@ -135,7 +135,7 @@ export async function createBooking(data: z.infer<typeof bookingSchema>) {
 
   if (admins.length > 0) {
     const emailPromises = admins.map((admin: User) => {
-      const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/bookings/${booking.id}`
+      const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/booking/bookings/${booking.id}`
       return transport.sendMail({
         from: env.SMTP_FROM,
         to: admin.email,
@@ -153,7 +153,7 @@ export async function createBooking(data: z.infer<typeof bookingSchema>) {
     await Promise.allSettled(emailPromises)
   }
 
-  revalidatePath('/dashboard')
+  revalidatePath('/booking')
   revalidatePath('/calendar')
   return booking
 }
@@ -201,7 +201,7 @@ export async function updateBookingStatus(bookingId: string, status: "APPROVED" 
 
 
   // generate booking url
-  const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/bookings/${booking.id}`
+  const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/booking/bookings/${booking.id}`
 
   // Send email to user if status is APPROVED or REJECTED
   if ((status === "APPROVED" || status === "REJECTED") && booking.user.email) {
@@ -248,7 +248,7 @@ END:VCALENDAR`
     }
   }
 
-  revalidatePath('/dashboard')
+  revalidatePath('/booking')
   revalidatePath('/calendar')
 }
 
@@ -310,8 +310,8 @@ export async function deleteBooking(bookingId: string) {
     where: { id: bookingId }
   })
 
-  revalidatePath('/dashboard')
-  revalidatePath('/dashboard/manage-bookings')
+  revalidatePath('/booking')
+  revalidatePath('/booking/manage-bookings')
   revalidatePath('/calendar')
 }
 
@@ -325,7 +325,7 @@ export async function deleteBookings(bookingIds: string[]) {
     }
   })
 
-  revalidatePath('/dashboard')
-  revalidatePath('/dashboard/manage-bookings')
+  revalidatePath('/booking')
+  revalidatePath('/booking/manage-bookings')
   revalidatePath('/calendar')
 }

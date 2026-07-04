@@ -64,7 +64,7 @@ export function AppSidebar() {
   const applicationMenu: NavItem[] = [
     {
       title: 'Dashboard',
-      url: `/dashboard`,
+      url: `/booking`,
       icon: 'dashboard',
       isActive: false,
       shortcut: ['a', 'd'],
@@ -75,7 +75,7 @@ export function AppSidebar() {
   const bookingMenu: NavItem[] = [
     {
       title: 'Book Studio',
-      url: `/dashboard/calendar`,
+      url: `/booking/calendar`,
       icon: 'add',
       isActive: false,
       shortcut: ['b', 'm'],
@@ -83,7 +83,7 @@ export function AppSidebar() {
     },
     {
       title: 'My Bookings',
-      url: `/dashboard/bookings`,
+      url: `/booking/bookings`,
       icon: 'page',
       isActive: false,
       shortcut: ['m', 'b'],
@@ -94,7 +94,7 @@ export function AppSidebar() {
   if (session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN") {
     bookingMenu.push({
       title: 'Manage Bookings',
-      url: `/dashboard/manage-bookings`,
+      url: `/booking/manage-bookings`,
       icon: 'kanban',
       isActive: false,
       shortcut: ['e', 'b'],
@@ -105,7 +105,7 @@ export function AppSidebar() {
   const userMenu: NavItem[] = [
     {
       title: 'Profile',
-      url: `/dashboard/profile`,
+      url: `/booking/profile`,
       icon: 'user',
       isActive: false,
       shortcut: ['m', 'p'],
@@ -116,7 +116,7 @@ export function AppSidebar() {
   if (session?.user?.role === "SUPERADMIN") {
     userMenu.push({
       title: 'Manage Users',
-      url: `/dashboard/users`,
+      url: `/booking/users`,
       icon: 'employee',
       isActive: false,
       shortcut: ['m', 'u'],
