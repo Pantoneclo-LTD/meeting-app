@@ -14,7 +14,7 @@ import { updateBookingStatus } from "@/app/actions/booking"
 import { toast } from "sonner"
 import { Eye } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
-import { BookingDetailsDialog } from "@/components/booking-details-dialog"
+import { BookingDetailsDialog } from "@/components/ui/booking-dialogues/booking-details-dialog"
 import { useSession } from "next-auth/react"
 
 type BookingRow = {
@@ -31,12 +31,12 @@ type BookingRow = {
 
 const columnHelper = createColumnHelper<BookingRow>()
 
-export function UserBookingTable({ 
+export function UserBookingTable({
   initialBookings,
   defaultOpenBooking = null,
   userRole = "USER",
   defaultStatus
-}: { 
+}: {
   initialBookings: BookingRow[]
   defaultOpenBooking?: BookingRow | null
   userRole?: string
