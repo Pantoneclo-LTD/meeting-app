@@ -120,21 +120,11 @@ export function BookingFormDialog({
       <Dialog
         open={isOpen}
         onOpenChange={(open) => {
-          if (!open && isConfirmDialogOpen) return
           if (!open) onClose()
         }}
       >
         <DialogContent
           className="sm:max-w-[850px] p-0 overflow-hidden bg-white rounded-2xl shadow-xl border border-slate-100 gap-0"
-          onInteractOutside={(e) => {
-            if (isConfirmDialogOpen) e.preventDefault()
-          }}
-          onPointerDownOutside={(e) => {
-            if (isConfirmDialogOpen) e.preventDefault()
-          }}
-          onEscapeKeyDown={(e) => {
-            if (isConfirmDialogOpen) e.preventDefault()
-          }}
         >
           <div className="p-6">
             <DialogTitle className="text-xl font-bold text-gray-950">Book Studio Room</DialogTitle>
@@ -528,18 +518,19 @@ export function BookingFormDialog({
               </Button>
             </div>
           </form>
+
+          {/* Nested Confirm Dialog for proper Radix focus management */}
+          {isOpen && <BookingConfirmDialog
+            isOpen={isConfirmDialogOpen}
+            onClose={() => setIsConfirmDialogOpen(false)}
+            onConfirm={handleConfirm}
+            purpose={purpose}
+            startTime={customStartTime}
+            endTime={customEndTime}
+            isPending={isPending}
+          />}
         </DialogContent>
       </Dialog>
-
-      {isOpen && <BookingConfirmDialog
-        isOpen={isConfirmDialogOpen}
-        onClose={() => setIsConfirmDialogOpen(false)}
-        onConfirm={handleConfirm}
-        purpose={purpose}
-        startTime={customStartTime}
-        endTime={customEndTime}
-        isPending={isPending}
-      />}
     </>
   )
 }
