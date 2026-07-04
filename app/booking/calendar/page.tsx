@@ -47,7 +47,7 @@ export default function CalendarPage() {
     start: '1970-01-01T00:00:00',
     end: new Date().toISOString(),
     display: 'background',
-    backgroundColor: '#f3f4f6', // gray-100
+    backgroundColor: '#fee2e2', // light red (disabled like vacation)
   }
 
   const calendarEvents = [...bookings, ...backgroundEvents, pastEvent]
@@ -182,6 +182,7 @@ export default function CalendarPage() {
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="timeGridWeek"
+            firstDay={5}
             headerToolbar={{
               left: "prev,next today",
               center: "title",
@@ -208,7 +209,13 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog 
+        open={isDialogOpen} 
+        onOpenChange={(open) => {
+          if (!open && isConfirmDialogOpen) return
+          setIsDialogOpen(open)
+        }}
+      >
         <DialogContent
           className="sm:max-w-[850px] p-0 overflow-hidden bg-white rounded-2xl shadow-xl border border-slate-100 gap-0"
           onInteractOutside={(e) => {
