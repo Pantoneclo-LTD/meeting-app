@@ -120,7 +120,7 @@ export async function createBooking(data: z.infer<typeof bookingSchema>) {
 
   // Send Email to Admins
   const admins = await prisma.user.findMany({
-    where: { role: { in: ["ADMIN", "SUPERADMIN"] } }
+    where: { role: { in: ["ADMIN"] } }
   })
 
   if (admins.length > 0) {
