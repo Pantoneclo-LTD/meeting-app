@@ -113,7 +113,7 @@ export function AppSidebar() {
     },
   ]
 
-  if (session?.user?.role === "SUPERADMIN") {
+  if (session?.user?.role === "SUPERADMIN" || session?.user?.role === "ADMIN") {
     userMenu.push({
       title: 'Manage Users',
       url: `/booking/users`,
