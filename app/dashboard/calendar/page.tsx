@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import FullCalendar from "@fullcalendar/react"
 import dayGridPlugin from "@fullcalendar/daygrid"
@@ -82,6 +82,33 @@ export default function CalendarPage() {
   const [customEndTime, setCustomEndTime] = useState<string>("")
   const [activeField, setActiveField] = useState<"start" | "end">("start")
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date())
+  const [pickerHighlight, setPickerHighlight] = useState(false)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const hourScrollRef = useRef<HTMLDivElement>(null)
+  const minuteScrollRef = useRef<HTMLDivElement>(null)
+
+  // Smoothly scroll hour & minute lists to show the currently selected value
+  useEffect(() => {
+    const scrollToSelected = (container: HTMLDivElement | null) => {
+      if (!container) return
+      const selected = container.querySelector<HTMLButtonElement>('[data-selected="true"]')
+      if (selected) {
+        selected.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
+    }
+    // Small delay so React has rendered the updated selected state first
+    const id = setTimeout(() => {
+      scrollToSelected(hourScrollRef.current)
+      scrollToSelected(minuteScrollRef.current)
+    }, 50)
+    return () => clearTimeout(id)
+  }, [activeField, customStartTime, customEndTime])
+
+  const scrollToPicker = () => {
+    pickerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+    setPickerHighlight(true)
+    setTimeout(() => setPickerHighlight(false), 700)
+  }
 
   const toLocalFormat = (date: Date) => {
     const pad = (n: number) => n.toString().padStart(2, '0')
@@ -190,6 +217,7 @@ export default function CalendarPage() {
                     onClick={() => {
                       setActiveField("start")
                       if (customStartTime) setCalendarMonth(new Date(customStartTime))
+                      scrollToPicker()
                     }}
                     className={`w-full flex items-center justify-between px-3 py-2.5 bg-white border rounded-lg text-sm transition-all text-gray-955 font-semibold ${activeField === "start"
                       ? "border-blue-600 ring-2 ring-blue-500/20"
@@ -212,6 +240,7 @@ export default function CalendarPage() {
                     onClick={() => {
                       setActiveField("end")
                       if (customEndTime) setCalendarMonth(new Date(customEndTime))
+                      scrollToPicker()
                     }}
                     className={`w-full flex items-center justify-between px-3 py-2.5 bg-white border rounded-lg text-sm transition-all text-gray-955 font-semibold ${activeField === "end"
                       ? "border-blue-600 ring-2 ring-blue-500/20"
@@ -274,7 +303,10 @@ export default function CalendarPage() {
               </div>
 
               {/* Right Column - Picker Widget */}
-              <div className="lg:col-span-7 flex border border-slate-100 rounded-xl overflow-hidden bg-white shadow-xs p-4 gap-4 justify-between h-[340px]">
+              <div
+                ref={pickerRef}
+                className={`lg:col-span-7 flex border rounded-xl overflow-hidden bg-white shadow-xs p-4 gap-4 justify-between h-[340px] transition-all duration-300 ${pickerHighlight ? "border-blue-400 ring-2 ring-blue-300/40" : "border-slate-100"}`}
+              >
                 {/* Calendar Side */}
                 <div className="flex-1 select-none">
                   {/* Calendar Navigation Header */}
@@ -452,13 +484,14 @@ export default function CalendarPage() {
                           >
                             <ChevronUp className="size-4" />
                           </button>
-                          <div className="flex flex-col gap-1 my-1 overflow-y-auto max-h-[150px] w-10 py-1 scrollbar-none items-center">
+                          <div ref={hourScrollRef} className="flex flex-col gap-1 my-1 overflow-y-auto max-h-[150px] w-10 py-1 scrollbar-none items-center">
                             {hours.map((h) => {
                               const isSelected = parseInt(h, 10) === currentHour12
                               return (
                                 <button
                                   key={h}
                                   type="button"
+                                  data-selected={isSelected ? "true" : "false"}
                                   onClick={() => handleHourSelect(parseInt(h, 10))}
                                   className={`w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-colors shrink-0 ${isSelected
                                     ? "bg-blue-50 text-blue-600 border border-blue-200"
@@ -498,13 +531,14 @@ export default function CalendarPage() {
                           >
                             <ChevronUp className="size-4" />
                           </button>
-                          <div className="flex flex-col gap-1 my-1 overflow-y-auto max-h-[150px] w-10 py-1 scrollbar-none items-center">
+                          <div ref={minuteScrollRef} className="flex flex-col gap-1 my-1 overflow-y-auto max-h-[150px] w-10 py-1 scrollbar-none items-center">
                             {minutes.map((m) => {
                               const isSelected = parseInt(m, 10) === currentMinute
                               return (
                                 <button
                                   key={m}
                                   type="button"
+                                  data-selected={isSelected ? "true" : "false"}
                                   onClick={() => handleMinuteSelect(parseInt(m, 10))}
                                   className={`w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-colors shrink-0 ${isSelected
                                     ? "bg-blue-50 text-blue-600 border border-blue-200"
