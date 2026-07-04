@@ -16,11 +16,13 @@ import { useSession } from "next-auth/react"
 import { APP_CONFIG } from "@/lib/config"
 import { Calendar, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, FileText } from "lucide-react"
 import { BookingDetailsDialog } from "@/components/booking-details-dialog"
+import { BookingConfirmDialog } from "@/components/booking-confirm-dialog"
 
 export default function CalendarPage() {
   const queryClient = useQueryClient()
   const [dateRange, setDateRange] = useState({ start: new Date().toISOString(), end: new Date().toISOString() })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
   const [purpose, setPurpose] = useState("")
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,10 +58,12 @@ export default function CalendarPage() {
       toast.success("Booking request submitted successfully.")
       queryClient.invalidateQueries({ queryKey: ["bookings"] })
       setIsDialogOpen(false)
+      setIsConfirmDialogOpen(false)
       setPurpose("")
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to create booking")
+      setIsConfirmDialogOpen(false)
     }
   })
 
@@ -131,6 +135,17 @@ export default function CalendarPage() {
     setIsEventDetailsOpen(true)
   }
 
+  const handleConfirmBooking = () => {
+    const start = new Date(customStartTime)
+    const end = new Date(customEndTime)
+    createMutation.mutate({
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+      preparationTime: 0,
+      purpose,
+    })
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -155,12 +170,7 @@ export default function CalendarPage() {
       return toast.error("Purpose must be 255 characters or less.")
     }
 
-    createMutation.mutate({
-      startTime: start.toISOString(),
-      endTime: end.toISOString(),
-      preparationTime: 0,
-      purpose,
-    })
+    setIsConfirmDialogOpen(true)
   }
 
   return (
@@ -199,7 +209,24 @@ export default function CalendarPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[850px] p-0 overflow-hidden bg-white rounded-2xl shadow-xl border border-slate-100 gap-0">
+        <DialogContent
+          className="sm:max-w-[850px] p-0 overflow-hidden bg-white rounded-2xl shadow-xl border border-slate-100 gap-0"
+          onInteractOutside={(e) => {
+            if (isConfirmDialogOpen) {
+              e.preventDefault()
+            }
+          }}
+          onPointerDownOutside={(e) => {
+            if (isConfirmDialogOpen) {
+              e.preventDefault()
+            }
+          }}
+          onEscapeKeyDown={(e) => {
+            if (isConfirmDialogOpen) {
+              e.preventDefault()
+            }
+          }}
+        >
           <div className="p-6">
             <DialogTitle className="text-xl font-bold text-gray-950">Book Studio Room</DialogTitle>
             <p className="text-sm text-slate-500 mt-1">Reserve a time for your meeting.</p>
@@ -620,6 +647,16 @@ export default function CalendarPage() {
         onStatusChange={() => {
           queryClient.invalidateQueries({ queryKey: ["bookings"] })
         }}
+      />
+
+      <BookingConfirmDialog
+        isOpen={isConfirmDialogOpen}
+        onClose={() => setIsConfirmDialogOpen(false)}
+        onConfirm={handleConfirmBooking}
+        purpose={purpose}
+        startTime={customStartTime}
+        endTime={customEndTime}
+        isPending={createMutation.isPending}
       />
     </div>
   )
