@@ -531,7 +531,7 @@ export function BookingFormDialog({
         </DialogContent>
       </Dialog>
 
-      <BookingConfirmDialog
+      {isOpen && <BookingConfirmDialog
         isOpen={isConfirmDialogOpen}
         onClose={() => setIsConfirmDialogOpen(false)}
         onConfirm={handleConfirm}
@@ -539,7 +539,7 @@ export function BookingFormDialog({
         startTime={customStartTime}
         endTime={customEndTime}
         isPending={isPending}
-      />
+      />}
     </>
   )
 }
