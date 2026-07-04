@@ -103,7 +103,7 @@ export async function getUsers() {
 
 export async function changeUserPassword(userId: string, newPassword: string) {
   const session = await auth()
-  if (!session || session.user.role !== "SUPERADMIN") {
+  if (!session || (session.user.role !== "SUPERADMIN" && session.user.role !== "ADMIN")) {
     throw new Error("Unauthorized")
   }
 
