@@ -277,25 +277,20 @@ export async function getBookingsForCalendar(startStr: string, endStr: string) {
   })
 
   return bookings.map((b: Booking & { user: { name: string, id: string } }) => {
-    // If regular user and not their own booking, hide details
-    const isOwner = b.userId === session.user.id
-    const isAdmin = session.user.role === "ADMIN" || session.user.role === "SUPERADMIN"
-    const canView = isOwner || isAdmin
-
     // Add preparation time to the visual event end time, or just show it separately
     const endWithPrep = new Date(b.endTime.getTime() + b.preparationTime * 60000)
 
     return {
       id: b.id,
-      title: canView ? `${b.user.name} - ${b.purpose}` : 'Busy',
+      title: `${b.user.name} - ${b.purpose}`,
       start: b.startTime.toISOString(),
       end: b.endTime.toISOString(), // Standard end time
       extendedProps: {
         userId: b.userId,
         prepEnd: endWithPrep.toISOString(),
         status: b.status,
-        purpose: canView ? b.purpose : null,
-        owner: canView ? b.user.name : null
+        purpose: b.purpose,
+        owner: b.user.name
       },
       color: b.status === "PENDING" ? "#f59e0b" : "#10b981", // Orange vs Green
     }
