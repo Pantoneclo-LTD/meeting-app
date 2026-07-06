@@ -276,6 +276,30 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
             ))}
           </tbody>
         </table>
+
+        <div className="flex items-center justify-between p-3 border-t bg-gray-50">
+          <div className="text-gray-500 text-sm">
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          </div>
+          <div className="space-x-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Previous
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )
