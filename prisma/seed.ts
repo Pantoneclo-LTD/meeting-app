@@ -35,6 +35,25 @@ async function main() {
   })
 
   console.log(`Created SuperAdmin: ${superAdmin.email}`)
+
+  await prisma.user.create({
+    data: {
+      email: 'munira@matrixapparels.com',
+      name: 'Munira Haque',
+      password: hashedPassword,
+      role: 'ADMIN',
+    }
+  })
+
+  await prisma.user.create({
+    data: {
+      email: 'munsi@matrixapparels.com',
+      name: 'Munsi Shahnawaz',
+      password: hashedPassword,
+      role: 'ADMIN',
+    }
+  })
+
 }
 
 main()

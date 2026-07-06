@@ -16,7 +16,7 @@ const userSchema = z.object({
 
 export async function createUser(formData: FormData) {
   const session = await auth()
-  if (session?.user?.role !== "SUPERADMIN") throw new Error("Unauthorized")
+  if (session?.user?.role !== "SUPERADMIN" && session?.user?.role !== "ADMIN") throw new Error("Unauthorized")
 
   const rawData = Object.fromEntries(formData.entries())
   const parsed = userSchema.parse(rawData)
@@ -41,17 +41,18 @@ export async function createUser(formData: FormData) {
 export async function updateUser(userId: string, formData: FormData) {
   const session = await auth()
   // Superadmin can update anyone, users can update themselves
-  if (session?.user?.role !== "SUPERADMIN" && session?.user?.id !== userId) {
+  if ((session?.user?.role !== "SUPERADMIN" && session?.user?.role !== "ADMIN") && session?.user?.id !== userId) {
     throw new Error("Unauthorized")
   }
 
   const rawData = Object.fromEntries(formData.entries())
-  const parsed = userSchema.omit({ role: true }).parse(rawData)
+  const parsed = userSchema.parse(rawData)
 
   const dataToUpdate: Record<string, string | null | undefined> = {
     name: parsed.name,
     email: parsed.email,
     team: parsed.team,
+    role: parsed.role,
   }
 
   if (session?.user?.role === "SUPERADMIN") {
@@ -73,7 +74,7 @@ export async function updateUser(userId: string, formData: FormData) {
 
 export async function deleteUser(userId: string) {
   const session = await auth()
-  if (session?.user?.role !== "SUPERADMIN") throw new Error("Unauthorized")
+  if (session?.user?.role !== "SUPERADMIN" && session?.user?.role !== "ADMIN") throw new Error("Unauthorized")
 
   if (session.user.id === userId) throw new Error("Cannot delete yourself")
 
@@ -86,7 +87,7 @@ export async function deleteUser(userId: string) {
 
 export async function getUsers() {
   const session = await auth()
-  if (session?.user?.role !== "SUPERADMIN") throw new Error("Unauthorized")
+  if (session?.user?.role !== "SUPERADMIN" && session?.user?.role !== "ADMIN") throw new Error("Unauthorized")
 
   return prisma.user.findMany({
     select: {
@@ -102,7 +103,7 @@ export async function getUsers() {
 
 export async function changeUserPassword(userId: string, newPassword: string) {
   const session = await auth()
-  if (!session || session.user.role !== "SUPERADMIN") {
+  if (!session || (session.user.role !== "SUPERADMIN" && session.user.role !== "ADMIN")) {
     throw new Error("Unauthorized")
   }
 

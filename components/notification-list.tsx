@@ -2,7 +2,7 @@
 
 import type { Notification, Booking } from "@prisma/client"
 import { Check, Trash2 } from "lucide-react"
-import { markAsRead, markAllAsRead, deleteNotification } from "@/app/actions/notification"
+import { markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications } from "@/app/actions/notification"
 import { Button } from "@/components/ui/button"
 import { useTransition } from "react"
 import { toast } from "sonner"
@@ -33,7 +33,22 @@ export function NotificationList({ notifications }: { notifications: Notificatio
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between gap-3 mb-4">
+        <Button
+          variant="destructive"
+          disabled={isPending || notifications.length === 0}
+          onClick={() => {
+            if (window.confirm("Are you sure you want to delete all notifications?")) {
+              startTransition(async () => {
+                await deleteAllNotifications()
+                toast.success("All notifications deleted")
+              })
+            }
+          }}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete all
+        </Button>
         <Button
           variant="outline"
           disabled={isPending || !notifications.some(n => !n.isRead)}

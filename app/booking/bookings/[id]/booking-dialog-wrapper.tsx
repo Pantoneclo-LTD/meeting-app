@@ -1,6 +1,6 @@
 "use client"
 
-import { BookingDetailsDialog } from "@/components/booking-details-dialog"
+import { BookingDetailsDialog } from "@/components/ui/booking-dialogues/booking-details-dialog"
 import { useRouter } from "next/navigation"
 
 export function BookingDialogWrapper({

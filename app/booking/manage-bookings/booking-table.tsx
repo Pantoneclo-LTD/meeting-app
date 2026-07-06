@@ -17,7 +17,7 @@ import { utils, writeFile } from "xlsx"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { Eye } from "lucide-react"
-import { BookingDetailsDialog } from "@/components/booking-details-dialog"
+import { BookingDetailsDialog } from "@/components/ui/booking-dialogues/booking-details-dialog"
 
 type BookingRow = {
   id: string

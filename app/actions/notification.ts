@@ -61,3 +61,14 @@ export async function deleteNotification(id: string) {
 
   revalidatePath("/booking/notifications")
 }
+
+export async function deleteAllNotifications() {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  await prisma.notification.deleteMany({
+    where: { userId: session.user.id }
+  })
+
+  revalidatePath("/booking/notifications")
+}
