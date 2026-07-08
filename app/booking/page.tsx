@@ -127,18 +127,18 @@ export default async function DashboardPage() {
   const redirectBase = isAdmin ? "/booking/manage-bookings" : "/booking/bookings"
 
   return (
-    <div className="p-8 space-y-8 bg-gray-50/50 min-h-screen">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 bg-gray-50/50 min-h-screen">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-lg">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+          <p className="text-muted-foreground mt-1 text-sm md:text-lg">
             Welcome back, {session.user.name}.
           </p>
         </div>
         <div>
           <Link
             href="/booking/calendar"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#5B3EFA] to-[#AF2DF4] hover:opacity-95 text-white font-extrabold text-sm rounded-lg shadow-md transition-all tracking-wide"
+            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-[#5B3EFA] to-[#AF2DF4] hover:opacity-95 text-white font-extrabold text-sm rounded-lg shadow-md transition-all tracking-wide"
           >
             <span className="text-lg font-black leading-none">+</span>
             <span>BOOK STUDIO</span>
@@ -149,76 +149,76 @@ export default async function DashboardPage() {
       <NextMeetingWidget meeting={serializedNextMeeting} />
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
         <Link href={redirectBase} className="block transition-all hover:-translate-y-0.5 hover:shadow-md rounded-xl">
-          <Card className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
+          <Card size="sm" className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-gray-500">Total Bookings</CardTitle>
-              <BookMarked className="h-4 w-4 text-blue-500" />
+              <CardTitle className="text-xs md:text-sm font-semibold text-gray-500">Total Bookings</CardTitle>
+              <BookMarked className="h-4 w-4 text-blue-500 shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-extrabold text-gray-900">{totalBookings}</div>
+              <div className="text-2xl md:text-3xl font-extrabold text-gray-900">{totalBookings}</div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href={`${redirectBase}?status=PENDING`} className="block transition-all hover:-translate-y-0.5 hover:shadow-md rounded-xl">
-          <Card className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
+          <Card size="sm" className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-gray-500">Pending Approvals</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-500" />
+              <CardTitle className="text-xs md:text-sm font-semibold text-gray-500">Pending Approvals</CardTitle>
+              <Clock className="h-4 w-4 text-yellow-500 shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-extrabold text-gray-900">{pendingBookings}</div>
+              <div className="text-2xl md:text-3xl font-extrabold text-gray-900">{pendingBookings}</div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href={`${redirectBase}?status=APPROVED`} className="block transition-all hover:-translate-y-0.5 hover:shadow-md rounded-xl">
-          <Card className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
+          <Card size="sm" className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-gray-500">Approved</CardTitle>
-              <CalendarCheck className="h-4 w-4 text-emerald-500" />
+              <CardTitle className="text-xs md:text-sm font-semibold text-gray-500">Approved</CardTitle>
+              <CalendarCheck className="h-4 w-4 text-emerald-500 shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-extrabold text-gray-900">{approvedBookings}</div>
+              <div className="text-2xl md:text-3xl font-extrabold text-gray-900">{approvedBookings}</div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href={`${redirectBase}?status=REJECTED`} className="block transition-all hover:-translate-y-0.5 hover:shadow-md rounded-xl">
-          <Card className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
+          <Card size="sm" className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-gray-500">Rejected</CardTitle>
-              <CalendarCheck className="h-4 w-4 text-rose-500" />
+              <CardTitle className="text-xs md:text-sm font-semibold text-gray-500">Rejected</CardTitle>
+              <CalendarCheck className="h-4 w-4 text-rose-500 shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-extrabold text-gray-900">{rejectedBookings}</div>
+              <div className="text-2xl md:text-3xl font-extrabold text-gray-900">{rejectedBookings}</div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href={`${redirectBase}?status=CANCELLED`} className="block transition-all hover:-translate-y-0.5 hover:shadow-md rounded-xl">
-          <Card className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
+          <Card size="sm" className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-gray-500">Cancelled</CardTitle>
-              <CalendarCheck className="h-4 w-4 text-gray-400" />
+              <CardTitle className="text-xs md:text-sm font-semibold text-gray-500">Cancelled</CardTitle>
+              <CalendarCheck className="h-4 w-4 text-gray-400 shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-extrabold text-gray-900">{cancelledBookings}</div>
+              <div className="text-2xl md:text-3xl font-extrabold text-gray-900">{cancelledBookings}</div>
             </CardContent>
           </Card>
         </Link>
 
         {session.user.role === "SUPERADMIN" && (
           <Link href="/booking/users" className="block transition-all hover:-translate-y-0.5 hover:shadow-md rounded-xl">
-            <Card className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
+            <Card size="sm" className="h-full shadow-sm border-0 bg-white ring-1 ring-gray-100/80">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-semibold text-gray-500">Total Users</CardTitle>
-                <Users className="h-4 w-4 text-purple-500" />
+                <CardTitle className="text-xs md:text-sm font-semibold text-gray-500">Total Users</CardTitle>
+                <Users className="h-4 w-4 text-purple-500 shrink-0" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-extrabold text-gray-900">{totalUsers}</div>
+                <div className="text-2xl md:text-3xl font-extrabold text-gray-900">{totalUsers}</div>
               </CardContent>
             </Card>
           </Link>

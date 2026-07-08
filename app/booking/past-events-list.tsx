@@ -27,31 +27,31 @@ export function PastEventsList({ events }: { events: PastEvent[] }) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className="w-full text-xs md:text-sm text-left">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-gray-500 uppercase text-xs">
-                  <th className="px-4 py-3 font-semibold rounded-tl-lg">Date</th>
-                  <th className="px-4 py-3 font-semibold">Time</th>
-                  <th className="px-4 py-3 font-semibold">Purpose</th>
-                  <th className="px-4 py-3 font-semibold">Organizer</th>
-                  <th className="px-4 py-3 font-semibold rounded-tr-lg">Status</th>
+                <tr className="border-b border-gray-200 bg-gray-50 text-gray-500 uppercase text-[10px] md:text-xs">
+                  <th className="px-2 py-2 md:px-4 md:py-3 font-semibold rounded-tl-lg whitespace-nowrap">Date</th>
+                  <th className="px-2 py-2 md:px-4 md:py-3 font-semibold whitespace-nowrap">Time</th>
+                  <th className="px-2 py-2 md:px-4 md:py-3 font-semibold">Purpose</th>
+                  <th className="px-2 py-2 md:px-4 md:py-3 font-semibold">Organizer</th>
+                  <th className="px-2 py-2 md:px-4 md:py-3 font-semibold rounded-tr-lg whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {events.map((event) => (
                   <tr key={event.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-4 py-3 font-medium">{dayjs(event.startTime).format('MMM D, YYYY')}</td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-2 py-2 md:px-4 md:py-3 font-medium whitespace-nowrap">{dayjs(event.startTime).format('MMM D, YYYY')}</td>
+                    <td className="px-2 py-2 md:px-4 md:py-3 text-gray-600 whitespace-nowrap">
                       {dayjs(event.startTime).format('h:mm A')} - {dayjs(event.endTime).format('h:mm A')}
                     </td>
-                    <td className="px-4 py-3">{event.purpose}</td>
-                    <td className="px-4 py-3">{event.user.name}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                        ${event.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 
-                          event.status === 'REJECTED' || event.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 
-                          'bg-yellow-100 text-yellow-700'}`}>
-                        {event.status}
+                    <td className="px-2 py-2 md:px-4 md:py-3 max-w-[200px] truncate">{event.purpose}</td>
+                    <td className="px-2 py-2 md:px-4 md:py-3 whitespace-nowrap">{event.user.name}</td>
+                    <td className="px-2 py-2 md:px-4 md:py-3">
+                      <span className={`px-1.5 py-0.5 md:px-2.5 md:py-0.5 rounded-full text-[10px] md:text-xs font-bold border uppercase tracking-wide
+                        ${event.status === 'APPROVED' 
+                          ? 'bg-emerald-100/70 text-emerald-800 border-emerald-200/50' 
+                          : 'bg-slate-100 text-slate-800 border-slate-200/50'}`}>
+                        {event.status === 'APPROVED' ? 'Done' : 'Expired'}
                       </span>
                     </td>
                   </tr>

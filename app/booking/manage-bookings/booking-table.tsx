@@ -16,8 +16,10 @@ import { toast } from "sonner"
 import { utils, writeFile } from "xlsx"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
-import { Eye } from "lucide-react"
+import { Eye, Filter, ChevronDown, ChevronUp } from "lucide-react"
 import { BookingDetailsDialog } from "@/components/ui/booking-dialogues/booking-details-dialog"
+import { cn } from "@/lib/utils"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
 type BookingRow = {
   id: string
@@ -47,6 +49,7 @@ export function BookingTable({
   const [filterEndDate, setFilterEndDate] = useState("")
   const [filterStatus, setFilterStatus] = useState(defaultStatus || "ALL")
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
 
   const filteredBookings = useMemo(() => {
     return bookings.filter(b => {
@@ -155,7 +158,7 @@ export function BookingTable({
         const start = dayjs(info.getValue())
         const end = dayjs(info.row.original.endTime)
         return (
-          <div className="text-sm">
+          <div className="text-xs md:text-sm">
             <div>{start.format("MMM D, YYYY")}</div>
             <div className="text-gray-500">{start.format("h:mm A")} - {end.format("h:mm A")}</div>
           </div>
@@ -166,38 +169,75 @@ export function BookingTable({
       header: 'Status',
       cell: info => {
         const status = info.getValue()
+        const endTime = info.row.original.endTime
+        const isExpired = endTime ? dayjs(endTime).isBefore(dayjs()) : false
+
+        let displayStatus = status
         let color = "bg-gray-100 text-gray-800"
-        if (status === "APPROVED") color = "bg-green-100 text-green-800"
-        if (status === "PENDING") color = "bg-yellow-100 text-yellow-800"
-        if (status === "REJECTED" || status === "CANCELLED") color = "bg-red-100 text-red-800"
-        return <span className={`px-2 py-1 rounded text-xs font-medium ${color}`}>{status}</span>
+        
+        if (isExpired) {
+          if (status === "APPROVED") {
+            displayStatus = "Done"
+            color = "bg-green-100 text-green-800"
+          } else {
+            displayStatus = "Expired"
+            color = "bg-slate-100 text-slate-800"
+          }
+        } else {
+          if (status === "APPROVED") color = "bg-green-100 text-green-800"
+          if (status === "PENDING") color = "bg-yellow-100 text-yellow-800"
+          if (status === "REJECTED" || status === "CANCELLED") color = "bg-red-100 text-red-800"
+        }
+
+        return <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider ${color}`}>{displayStatus}</span>
       },
     }),
     columnHelper.display({
       id: 'actions',
       header: 'Actions',
       cell: info => {
+        const endTime = info.row.original.endTime
+        const isExpired = endTime ? dayjs(endTime).isBefore(dayjs()) : false
         return (
-          <div className="flex space-x-2">
-            <Button
-              size="icon-sm"
-              variant="outline"
-              title="View Details"
-              onClick={() => setSelectedBooking(info.row.original)}
-              className="text-gray-500 hover:text-gray-900 border-gray-200 hover:border-gray-300"
-            >
-              <Eye className="size-4" />
-            </Button>
-            {info.row.original.status === "PENDING" && (
-              <>
-                <Button size="sm" variant="default" onClick={() => handleStatusUpdate(info.row.original.id, "APPROVED")}>Approve</Button>
-                <Button size="sm" variant="destructive" onClick={() => handleStatusUpdate(info.row.original.id, "REJECTED")}>Reject</Button>
-              </>
-            )}
-            {userRole === "SUPERADMIN" && (
-              <Button size="sm" variant="destructive" onClick={() => handleDelete(info.row.original.id)}>Delete</Button>
-            )}
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-7 px-2 text-xs flex items-center gap-1 font-semibold border-slate-200 bg-white">
+                Actions <ChevronDown className="size-3.5 text-slate-400" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36 bg-white border border-slate-100 shadow-lg rounded-lg p-1">
+              <DropdownMenuItem
+                onClick={() => setSelectedBooking(info.row.original)}
+                className="flex items-center gap-2 text-xs font-semibold px-2 py-1.5 hover:bg-slate-50 rounded-md cursor-pointer text-slate-700"
+              >
+                <Eye className="size-3.5 text-slate-400" /> View Details
+              </DropdownMenuItem>
+              {info.row.original.status === "PENDING" && !isExpired && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => handleStatusUpdate(info.row.original.id, "APPROVED")}
+                    className="flex items-center gap-2 text-xs font-semibold px-2 py-1.5 hover:bg-emerald-50 text-emerald-600 rounded-md cursor-pointer"
+                  >
+                    Approve
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleStatusUpdate(info.row.original.id, "REJECTED")}
+                    className="flex items-center gap-2 text-xs font-semibold px-2 py-1.5 hover:bg-rose-50 text-rose-600 rounded-md cursor-pointer"
+                  >
+                    Reject
+                  </DropdownMenuItem>
+                </>
+              )}
+              {userRole === "SUPERADMIN" && (
+                <DropdownMenuItem
+                  onClick={() => handleDelete(info.row.original.id)}
+                  className="flex items-center gap-2 text-xs font-semibold px-2 py-1.5 hover:bg-rose-50 text-rose-600 rounded-md cursor-pointer border-t border-slate-50 mt-1"
+                >
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )
       },
     }),
@@ -253,8 +293,41 @@ export function BookingTable({
 
   return (
     <div className="space-y-4">
+      {/* Mobile Toggle Button */}
+      <div className="flex md:hidden flex-wrap items-center justify-between gap-1 bg-white p-2 rounded-md border">
+        <div className="flex items-center gap-1">
+          <Filter className="size-4 text-slate-500" />
+          <span className="text-sm font-bold text-slate-700">Filters</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="text-xs font-bold gap-1 text-slate-750 h-7 px-2"
+          >
+            {showFilters ? (
+              <>
+                Hide <ChevronUp className="size-3.5" />
+              </>
+            ) : (
+              <>
+                Show <ChevronDown className="size-3.5" />
+              </>
+            )}
+          </Button>
+        </div>
+        <div className="flex items-center gap-1 ml-auto">
+          <Button variant="outline" size="sm" onClick={exportExcel} className="h-7 px-2 text-[11px] font-semibold bg-white border-slate-200">
+            Export Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportPDF} className="h-7 px-2 text-[11px] font-semibold bg-white border-slate-200">
+            Export PDF
+          </Button>
+        </div>
+      </div>
+
       {/* Filter Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-white p-4 rounded-md border">
+      <div className={cn("grid grid-cols-1 md:grid-cols-5 gap-4 bg-white p-4 rounded-md border", !showFilters && "hidden md:grid")}>
         <div>
           <label className="text-xs font-semibold text-gray-500 uppercase">Search</label>
           <input
@@ -314,45 +387,67 @@ export function BookingTable({
 
       <div className="flex justify-between items-center">
         <span className="text-sm text-gray-500 font-medium">Showing {filteredBookings.length} booking(s)</span>
-        <div className="space-x-2">
+        <div className="flex items-center gap-2">
           {userRole === "SUPERADMIN" && Object.keys(rowSelection).filter(id => rowSelection[id]).length > 0 && (
-            <Button variant="destructive" onClick={handleBulkDelete}>
+            <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-8 px-3 text-xs">
               Delete Selected ({Object.keys(rowSelection).filter(id => rowSelection[id]).length})
             </Button>
           )}
-          <Button variant="outline" onClick={exportExcel}>Export Excel</Button>
-          <Button variant="outline" onClick={exportPDF}>Export PDF</Button>
+          <div className="hidden md:flex gap-2">
+            <Button variant="outline" onClick={exportExcel}>Export Excel</Button>
+            <Button variant="outline" onClick={exportPDF}>Export PDF</Button>
+          </div>
         </div>
       </div>
 
       <div className="border rounded-md bg-white">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 border-b">
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id} className="p-3 font-semibold text-gray-700">
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map(row => (
-              <tr key={row.id} className="border-b hover:bg-gray-50">
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="p-3">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs md:text-sm text-left">
+            <thead className="bg-gray-50 border-b">
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => {
+                    const isDateTime = header.id === 'startTime';
+                    return (
+                      <th
+                        key={header.id}
+                        className={cn(
+                          "p-2 md:p-3 font-semibold text-gray-700",
+                          isDateTime && "whitespace-nowrap w-full"
+                        )}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                      </th>
+                    );
+                  })}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map(row => (
+                <tr key={row.id} className="border-b hover:bg-gray-50">
+                  {row.getVisibleCells().map(cell => {
+                    const isDateTime = cell.column.id === 'startTime';
+                    return (
+                      <td
+                        key={cell.id}
+                        className={cn(
+                          "p-2 md:p-3",
+                          isDateTime && "whitespace-nowrap"
+                        )}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <div className="flex items-center justify-between p-3 border-t bg-gray-50">
           <div className="text-gray-500 text-sm">

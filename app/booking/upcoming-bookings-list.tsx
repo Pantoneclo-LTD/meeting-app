@@ -35,32 +35,32 @@ export function UpcomingBookingsList({ bookings }: { bookings: UpcomingBooking[]
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className="w-full text-xs md:text-sm text-left">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-gray-500 uppercase text-xs">
-                  <th className="px-4 py-3 font-semibold rounded-tl-lg">Date</th>
-                  <th className="px-4 py-3 font-semibold">Time (BST)</th>
-                  <th className="px-4 py-3 font-semibold">Purpose</th>
-                  <th className="px-4 py-3 font-semibold">Booked By</th>
-                  <th className="px-4 py-3 font-semibold rounded-tr-lg">Status</th>
+                <tr className="border-b border-gray-200 bg-gray-50 text-gray-500 uppercase text-[10px] md:text-xs">
+                  <th className="px-2 py-2 md:px-4 md:py-3 font-semibold rounded-tl-lg whitespace-nowrap">Date</th>
+                  <th className="px-2 py-2 md:px-4 md:py-3 font-semibold whitespace-nowrap">Time (BST)</th>
+                  <th className="px-2 py-2 md:px-4 md:py-3 font-semibold">Purpose</th>
+                  <th className="px-2 py-2 md:px-4 md:py-3 font-semibold">Booked By</th>
+                  <th className="px-2 py-2 md:px-4 md:py-3 font-semibold rounded-tr-lg whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {bookings.map((booking) => (
                   <tr key={booking.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-955">
+                    <td className="px-2 py-2 md:px-4 md:py-3 font-medium text-gray-955 whitespace-nowrap">
                       {dayjs(booking.startTime).tz("Asia/Dhaka").format('MMM D, YYYY')}
                     </td>
-                    <td className="px-4 py-3 text-gray-650 font-medium">
+                    <td className="px-2 py-2 md:px-4 md:py-3 text-gray-650 font-medium whitespace-nowrap">
                       {dayjs(booking.startTime).tz("Asia/Dhaka").format('h:mm A')} - {dayjs(booking.endTime).tz("Asia/Dhaka").format('h:mm A')}
                     </td>
-                    <td className="px-4 py-3 text-gray-955 font-semibold">{booking.purpose.length > 25 ? booking.purpose.substring(0, 25) + '...' : booking.purpose}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-2 md:px-4 md:py-3 text-gray-955 font-semibold max-w-[200px] truncate">{booking.purpose}</td>
+                    <td className="px-2 py-2 md:px-4 md:py-3 whitespace-nowrap">
                       <div className="font-medium text-gray-955">{booking.user.name}</div>
-                      <div className="text-xs text-gray-500">{booking.user.email}</div>
+                      <div className="text-[10px] md:text-xs text-gray-500">{booking.user.email}</div>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide border ${
+                    <td className="px-2 py-2 md:px-4 md:py-3">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 md:px-2.5 md:py-0.5 rounded-full text-[10px] md:text-xs font-extrabold uppercase tracking-wide border ${
                         booking.status === 'APPROVED' ? 'bg-emerald-100/70 text-emerald-800 border-emerald-200/50' : 
                         booking.status === 'REJECTED' || booking.status === 'CANCELLED' ? 'bg-rose-100/70 text-rose-800 border-rose-200/50' : 
                         'bg-amber-100/70 text-amber-800 border-amber-200/50'

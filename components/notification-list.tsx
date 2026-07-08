@@ -64,7 +64,7 @@ export function NotificationList({ notifications }: { notifications: Notificatio
         </Button>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
         {notifications.map((notif) => (
           <div
             key={notif.id}

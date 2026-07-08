@@ -31,7 +31,7 @@ export function BookingConfirmDialog({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="sm:max-w-[480px] p-6 gap-6 bg-white rounded-xl shadow-lg border border-slate-100"
+        className="w-[calc(100%-2rem)] sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-6 gap-6 bg-white rounded-xl shadow-lg border border-slate-100"
       >
         <DialogHeader className="pb-2">
           <DialogTitle className="text-xl font-bold text-gray-955">Confirm Booking Details</DialogTitle>

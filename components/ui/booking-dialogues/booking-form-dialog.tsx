@@ -9,6 +9,7 @@ import dayjs from "dayjs"
 import { toast } from "sonner"
 import { APP_CONFIG } from "@/lib/config"
 import { BookingConfirmDialog } from "./booking-confirm-dialog"
+import { cn } from "@/lib/utils"
 
 interface BookingFormDialogProps {
   isOpen: boolean
@@ -38,6 +39,7 @@ export function BookingFormDialog({
   const [activeField, setActiveField] = useState<"start" | "end">("start")
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date())
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+  const [isPickerPopupOpen, setIsPickerPopupOpen] = useState(false)
   const [pickerHighlight, setPickerHighlight] = useState(false)
 
   const pickerRef = useRef<HTMLDivElement>(null)
@@ -115,6 +117,294 @@ export function BookingFormDialog({
     })
   }
 
+  const renderPickerContent = (isMobilePopup: boolean) => {
+    const activeDateStr = activeField === "start" ? customStartTime : customEndTime
+    const activeDate = dayjs(activeDateStr)
+    const currentHour24 = activeDate.hour()
+    const currentMinute = activeDate.minute()
+    const isPM = currentHour24 >= 12
+    const currentHour12 = currentHour24 % 12 === 0 ? 12 : currentHour24 % 12
+
+    const handleHourSelect = (h12: number) => {
+      let newHour24 = h12
+      if (isPM && h12 !== 12) newHour24 += 12
+      if (!isPM && h12 === 12) newHour24 = 0
+      const newDate = activeDate.hour(newHour24)
+      const newDateStr = toLocalFormat(newDate.toDate())
+      if (activeField === "start") {
+        setCustomStartTime(newDateStr)
+      } else {
+        setCustomEndTime(newDateStr)
+      }
+    }
+
+    const handleMinuteSelect = (m: number) => {
+      const newDate = activeDate.minute(m)
+      const newDateStr = toLocalFormat(newDate.toDate())
+      if (activeField === "start") {
+        setCustomStartTime(newDateStr)
+      } else {
+        setCustomEndTime(newDateStr)
+      }
+    }
+
+    const handleAMPMSelect = (pm: boolean) => {
+      let newHour24 = currentHour12
+      if (pm && currentHour12 !== 12) newHour24 += 12
+      if (!pm && currentHour12 === 12) newHour24 = 0
+      const newDate = activeDate.hour(newHour24)
+      const newDateStr = toLocalFormat(newDate.toDate())
+      if (activeField === "start") {
+        setCustomStartTime(newDateStr)
+      } else {
+        setCustomEndTime(newDateStr)
+      }
+    }
+
+    const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'))
+    const baseMinutes = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'))
+    const currentMinuteStr = currentMinute.toString().padStart(2, '0')
+    const minutes = baseMinutes.includes(currentMinuteStr)
+      ? baseMinutes
+      : [...baseMinutes, currentMinuteStr].sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+
+    return (
+      <>
+        {/* Calendar Side */}
+        <div className="flex-1 select-none">
+          {/* Calendar Navigation Header */}
+          <div className="flex items-center justify-between mb-3 px-1">
+            <button
+              type="button"
+              onClick={() => setCalendarMonth(dayjs(calendarMonth).subtract(1, 'month').toDate())}
+              className="p-1 text-slate-400 hover:text-slate-955 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <span className="text-sm font-bold text-slate-800">
+              {dayjs(calendarMonth).format("MMMM YYYY")}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCalendarMonth(dayjs(calendarMonth).add(1, 'month').toDate())}
+              className="p-1 text-slate-400 hover:text-slate-955 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+
+          {/* Weekdays */}
+          <div className="grid grid-cols-7 gap-1 text-center mb-1">
+            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+              <span key={day} className="text-xs font-semibold text-slate-400">
+                {day}
+              </span>
+            ))}
+          </div>
+
+          {/* Days */}
+          <div className="grid grid-cols-7 gap-1 text-center">
+            {(() => {
+              const startOfMonth = dayjs(calendarMonth).startOf('month')
+              const endOfMonth = dayjs(calendarMonth).endOf('month')
+              const startDayOfWeek = startOfMonth.day()
+              const daysList: dayjs.Dayjs[] = []
+
+              for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                daysList.push(startOfMonth.subtract(i + 1, 'day'))
+              }
+              const totalDaysInMonth = startOfMonth.daysInMonth()
+              for (let i = 0; i < totalDaysInMonth; i++) {
+                daysList.push(startOfMonth.add(i, 'day'))
+              }
+              while (daysList.length < 42) {
+                daysList.push(endOfMonth.add(daysList.length - totalDaysInMonth - startDayOfWeek + 1, 'day'))
+              }
+
+              const activeDateVal = dayjs(activeDateStr)
+
+              return daysList.map((day, idx) => {
+                const isCurrentMonth = day.month() === dayjs(calendarMonth).month()
+                const isSelected = day.isSame(activeDateVal, 'day')
+
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      const activeDateObj = activeField === "start" ? dayjs(customStartTime) : dayjs(customEndTime)
+                      const newDate = day.hour(activeDateObj.hour()).minute(activeDateObj.minute())
+                      const newDateStr = toLocalFormat(newDate.toDate())
+                      if (activeField === "start") {
+                        setCustomStartTime(newDateStr)
+                      } else {
+                        setCustomEndTime(newDateStr)
+                      }
+                    }}
+                    className={cn(
+                      "mx-auto flex items-center justify-center text-xs font-semibold rounded-full transition-all",
+                      isMobilePopup ? "h-7 w-7" : "h-8 w-8",
+                      isSelected
+                        ? "bg-blue-600 text-white font-bold"
+                        : isCurrentMonth
+                          ? "text-slate-900 hover:bg-slate-100 hover:text-slate-900"
+                          : "text-slate-300 hover:bg-slate-55 hover:text-slate-400"
+                    )}
+                  >
+                    {day.date()}
+                  </button>
+                )
+              })
+            })()}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              const today = dayjs()
+              setCalendarMonth(today.toDate())
+              const activeDateObj = activeField === "start" ? dayjs(customStartTime) : dayjs(customEndTime)
+              const newDate = today.hour(activeDateObj.hour()).minute(activeDateObj.minute())
+              const newDateStr = toLocalFormat(newDate.toDate())
+              if (activeField === "start") {
+                setCustomStartTime(newDateStr)
+              } else {
+                setCustomEndTime(newDateStr)
+              }
+            }}
+            className="mt-3 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors block"
+          >
+            Today
+          </button>
+        </div>
+
+        {/* Divider */}
+        {isMobilePopup ? (
+          <div className="h-px bg-slate-100 w-full my-2 shrink-0" />
+        ) : (
+          <div className="w-px bg-slate-100 self-stretch my-2 shrink-0" />
+        )}
+
+        {/* Time Picker Side */}
+        <div className={cn("flex flex-col items-center select-none shrink-0", isMobilePopup ? "w-full" : "w-44")}>
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Time</span>
+          <div className={cn("flex items-center gap-1 mt-2", isMobilePopup ? "h-[160px]" : "h-[220px]")}>
+            {/* Hours */}
+            <div className="flex flex-col items-center h-full">
+              <button
+                type="button"
+                onClick={() => {
+                  const nextHour = currentHour12 === 1 ? 12 : currentHour12 - 1
+                  handleHourSelect(nextHour)
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1 transition-colors"
+              >
+                <ChevronUp className="size-4" />
+              </button>
+              <div ref={hourScrollRef} className={cn("flex flex-col gap-1 my-1 overflow-y-auto w-10 py-1 scrollbar-none items-center", isMobilePopup ? "max-h-[90px]" : "max-h-[150px]")}>
+                {hours.map((h) => {
+                  const isSelected = parseInt(h, 10) === currentHour12
+                  return (
+                    <button
+                      key={h}
+                      type="button"
+                      data-selected={isSelected ? "true" : "false"}
+                      onClick={() => handleHourSelect(parseInt(h, 10))}
+                      className={`w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-colors shrink-0 ${isSelected
+                        ? "bg-blue-50 text-blue-600 border border-blue-200"
+                        : "text-slate-600 hover:bg-slate-50"
+                        }`}
+                    >
+                      {h}
+                    </button>
+                  )
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const nextHour = currentHour12 === 12 ? 1 : currentHour12 + 1
+                  handleHourSelect(nextHour)
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1 transition-colors"
+              >
+                <ChevronDown className="size-4" />
+              </button>
+            </div>
+
+            {/* Separator */}
+            <span className="text-base font-bold text-slate-400 self-center -mt-2">:</span>
+
+            {/* Minutes */}
+            <div className="flex flex-col items-center h-full">
+              <button
+                type="button"
+                onClick={() => {
+                  let nextMin = currentMinute - 5
+                  if (nextMin < 0) nextMin = 55
+                  handleMinuteSelect(nextMin)
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1 transition-colors"
+              >
+                <ChevronUp className="size-4" />
+              </button>
+              <div ref={minuteScrollRef} className={cn("flex flex-col gap-1 my-1 overflow-y-auto w-10 py-1 scrollbar-none items-center", isMobilePopup ? "max-h-[90px]" : "max-h-[150px]")}>
+                {minutes.map((m) => {
+                  const isSelected = parseInt(m, 10) === currentMinute
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      data-selected={isSelected ? "true" : "false"}
+                      onClick={() => handleMinuteSelect(parseInt(m, 10))}
+                      className={`w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-colors shrink-0 ${isSelected
+                        ? "bg-blue-50 text-blue-600 border border-blue-200"
+                        : "text-slate-600 hover:bg-slate-55"
+                        }`}
+                    >
+                      {m}
+                    </button>
+                  )
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  let nextMin = currentMinute + 5
+                  if (nextMin >= 60) nextMin = 0
+                  handleMinuteSelect(nextMin)
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1 transition-colors"
+              >
+                <ChevronDown className="size-4" />
+              </button>
+            </div>
+
+            {/* AM/PM */}
+            <div className="flex flex-col border border-slate-200 rounded-lg overflow-hidden shrink-0 ml-1.5">
+              <button
+                type="button"
+                onClick={() => handleAMPMSelect(false)}
+                className={`px-2.5 py-1.5 text-xs font-bold transition-all ${!isPM ? "bg-blue-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+              >
+                AM
+              </button>
+              <button
+                type="button"
+                onClick={() => handleAMPMSelect(true)}
+                className={`px-2.5 py-1.5 text-xs font-bold border-t border-slate-200 transition-all ${isPM ? "bg-blue-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+              >
+                PM
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   return (
     <>
       <Dialog
@@ -124,7 +414,7 @@ export function BookingFormDialog({
         }}
       >
         <DialogContent
-          className="sm:max-w-[850px] p-0 overflow-hidden bg-white rounded-2xl shadow-xl border border-slate-100 gap-0"
+          className="w-[calc(100%-2rem)] sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 bg-white rounded-2xl shadow-xl border border-slate-100 gap-0"
         >
           <div className="p-6">
             <DialogTitle className="text-xl font-bold text-gray-950">Book Studio Room</DialogTitle>
@@ -143,7 +433,11 @@ export function BookingFormDialog({
                     onClick={() => {
                       setActiveField("start")
                       if (customStartTime) setCalendarMonth(new Date(customStartTime))
-                      scrollToPicker()
+                      if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                        setIsPickerPopupOpen(true)
+                      } else {
+                        scrollToPicker()
+                      }
                     }}
                     className={`w-full flex items-center justify-between px-3 py-2.5 bg-white border rounded-lg text-sm transition-all text-gray-955 font-semibold ${activeField === "start"
                       ? "border-blue-600 ring-2 ring-blue-500/20"
@@ -166,7 +460,11 @@ export function BookingFormDialog({
                     onClick={() => {
                       setActiveField("end")
                       if (customEndTime) setCalendarMonth(new Date(customEndTime))
-                      scrollToPicker()
+                      if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                        setIsPickerPopupOpen(true)
+                      } else {
+                        scrollToPicker()
+                      }
                     }}
                     className={`w-full flex items-center justify-between px-3 py-2.5 bg-white border rounded-lg text-sm transition-all text-gray-955 font-semibold ${activeField === "end"
                       ? "border-blue-600 ring-2 ring-blue-500/20"
@@ -212,290 +510,12 @@ export function BookingFormDialog({
                 </div>
               </div>
 
-              {/* Right Column - Picker Widget */}
+              {/* Right Column - Picker Widget (Desktop only) */}
               <div
                 ref={pickerRef}
-                className={`lg:col-span-7 flex border rounded-xl overflow-hidden bg-white shadow-xs p-4 gap-4 justify-between h-[340px] transition-all duration-300 ${pickerHighlight ? "border-blue-400 ring-2 ring-blue-300/40" : "border-slate-100"}`}
+                className={`hidden lg:flex lg:col-span-7 flex-row border rounded-xl overflow-hidden bg-white shadow-xs p-4 gap-4 justify-between h-[340px] transition-all duration-300 ${pickerHighlight ? "border-blue-400 ring-2 ring-blue-300/40" : "border-slate-100"}`}
               >
-                {/* Calendar Side */}
-                <div className="flex-1 select-none">
-                  {/* Calendar Navigation Header */}
-                  <div className="flex items-center justify-between mb-3 px-1">
-                    <button
-                      type="button"
-                      onClick={() => setCalendarMonth(dayjs(calendarMonth).subtract(1, 'month').toDate())}
-                      className="p-1 text-slate-400 hover:text-slate-950 rounded-lg hover:bg-slate-50 transition-colors"
-                    >
-                      <ChevronLeft className="size-4" />
-                    </button>
-                    <span className="text-sm font-bold text-slate-800">
-                      {dayjs(calendarMonth).format("MMMM YYYY")}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setCalendarMonth(dayjs(calendarMonth).add(1, 'month').toDate())}
-                      className="p-1 text-slate-400 hover:text-slate-950 rounded-lg hover:bg-slate-50 transition-colors"
-                    >
-                      <ChevronRight className="size-4" />
-                    </button>
-                  </div>
-
-                  {/* Weekdays */}
-                  <div className="grid grid-cols-7 gap-1 text-center mb-1">
-                    {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                      <span key={day} className="text-xs font-semibold text-slate-400">
-                        {day}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Days */}
-                  <div className="grid grid-cols-7 gap-1 text-center">
-                    {(() => {
-                      const startOfMonth = dayjs(calendarMonth).startOf('month')
-                      const endOfMonth = dayjs(calendarMonth).endOf('month')
-                      const startDayOfWeek = startOfMonth.day()
-                      const daysList: dayjs.Dayjs[] = []
-
-                      for (let i = startDayOfWeek - 1; i >= 0; i--) {
-                        daysList.push(startOfMonth.subtract(i + 1, 'day'))
-                      }
-                      const totalDaysInMonth = startOfMonth.daysInMonth()
-                      for (let i = 0; i < totalDaysInMonth; i++) {
-                        daysList.push(startOfMonth.add(i, 'day'))
-                      }
-                      while (daysList.length < 42) {
-                        daysList.push(endOfMonth.add(daysList.length - totalDaysInMonth - startDayOfWeek + 1, 'day'))
-                      }
-
-                      const activeDateStr = activeField === "start" ? customStartTime : customEndTime
-                      const activeDateVal = dayjs(activeDateStr)
-
-                      return daysList.map((day, idx) => {
-                        const isCurrentMonth = day.month() === dayjs(calendarMonth).month()
-                        const isSelected = day.isSame(activeDateVal, 'day')
-
-                        return (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              const activeDate = activeField === "start" ? dayjs(customStartTime) : dayjs(customEndTime)
-                              const newDate = day.hour(activeDate.hour()).minute(activeDate.minute())
-                              const newDateStr = toLocalFormat(newDate.toDate())
-                              if (activeField === "start") {
-                                setCustomStartTime(newDateStr)
-                              } else {
-                                setCustomEndTime(newDateStr)
-                              }
-                            }}
-                            className={`h-8 w-8 mx-auto flex items-center justify-center text-xs font-semibold rounded-full transition-all ${isSelected
-                              ? "bg-blue-600 text-white font-bold"
-                              : isCurrentMonth
-                                ? "text-slate-900 hover:bg-slate-100 hover:text-slate-900"
-                                : "text-slate-300 hover:bg-slate-55 hover:text-slate-400"
-                              }`}
-                          >
-                            {day.date()}
-                          </button>
-                        )
-                      })
-                    })()}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const today = dayjs()
-                      setCalendarMonth(today.toDate())
-                      const activeDate = activeField === "start" ? dayjs(customStartTime) : dayjs(customEndTime)
-                      const newDate = today.hour(activeDate.hour()).minute(activeDate.minute())
-                      const newDateStr = toLocalFormat(newDate.toDate())
-                      if (activeField === "start") {
-                        setCustomStartTime(newDateStr)
-                      } else {
-                        setCustomEndTime(newDateStr)
-                      }
-                    }}
-                    className="mt-3 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors block"
-                  >
-                    Today
-                  </button>
-                </div>
-
-                {/* Vertical Divider */}
-                <div className="w-px bg-slate-100 self-stretch my-2 shrink-0" />
-
-                {/* Time Picker Side */}
-                {(() => {
-                  const activeDateStr = activeField === "start" ? customStartTime : customEndTime
-                  const activeDate = dayjs(activeDateStr)
-                  const currentHour24 = activeDate.hour()
-                  const currentMinute = activeDate.minute()
-                  const isPM = currentHour24 >= 12
-                  const currentHour12 = currentHour24 % 12 === 0 ? 12 : currentHour24 % 12
-
-                  const handleHourSelect = (h12: number) => {
-                    let newHour24 = h12
-                    if (isPM && h12 !== 12) newHour24 += 12
-                    if (!isPM && h12 === 12) newHour24 = 0
-                    const newDate = activeDate.hour(newHour24)
-                    const newDateStr = toLocalFormat(newDate.toDate())
-                    if (activeField === "start") {
-                      setCustomStartTime(newDateStr)
-                    } else {
-                      setCustomEndTime(newDateStr)
-                    }
-                  }
-
-                  const handleMinuteSelect = (m: number) => {
-                    const newDate = activeDate.minute(m)
-                    const newDateStr = toLocalFormat(newDate.toDate())
-                    if (activeField === "start") {
-                      setCustomStartTime(newDateStr)
-                    } else {
-                      setCustomEndTime(newDateStr)
-                    }
-                  }
-
-                  const handleAMPMSelect = (pm: boolean) => {
-                    let newHour24 = currentHour12
-                    if (pm && currentHour12 !== 12) newHour24 += 12
-                    if (!pm && currentHour12 === 12) newHour24 = 0
-                    const newDate = activeDate.hour(newHour24)
-                    const newDateStr = toLocalFormat(newDate.toDate())
-                    if (activeField === "start") {
-                      setCustomStartTime(newDateStr)
-                    } else {
-                      setCustomEndTime(newDateStr)
-                    }
-                  }
-
-                  const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'))
-                  const baseMinutes = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'))
-                  const currentMinuteStr = currentMinute.toString().padStart(2, '0')
-                  const minutes = baseMinutes.includes(currentMinuteStr)
-                    ? baseMinutes
-                    : [...baseMinutes, currentMinuteStr].sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
-
-                  return (
-                    <div className="flex flex-col items-center select-none w-44 shrink-0">
-                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Time</span>
-                      <div className="flex items-center gap-1 mt-2 h-[220px]">
-                        {/* Hours */}
-                        <div className="flex flex-col items-center h-full">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const nextHour = currentHour12 === 1 ? 12 : currentHour12 - 1
-                              handleHourSelect(nextHour)
-                            }}
-                            className="text-slate-400 hover:text-slate-600 p-1 transition-colors"
-                          >
-                            <ChevronUp className="size-4" />
-                          </button>
-                          <div ref={hourScrollRef} className="flex flex-col gap-1 my-1 overflow-y-auto max-h-[150px] w-10 py-1 scrollbar-none items-center">
-                            {hours.map((h) => {
-                              const isSelected = parseInt(h, 10) === currentHour12
-                              return (
-                                <button
-                                  key={h}
-                                  type="button"
-                                  data-selected={isSelected ? "true" : "false"}
-                                  onClick={() => handleHourSelect(parseInt(h, 10))}
-                                  className={`w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-colors shrink-0 ${isSelected
-                                    ? "bg-blue-50 text-blue-600 border border-blue-200"
-                                    : "text-slate-600 hover:bg-slate-50"
-                                    }`}
-                                >
-                                  {h}
-                                </button>
-                              )
-                            })}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const nextHour = currentHour12 === 12 ? 1 : currentHour12 + 1
-                              handleHourSelect(nextHour)
-                            }}
-                            className="text-slate-400 hover:text-slate-600 p-1 transition-colors"
-                          >
-                            <ChevronDown className="size-4" />
-                          </button>
-                        </div>
-
-                        {/* Separator */}
-                        <span className="text-base font-bold text-slate-400 self-center -mt-2">:</span>
-
-                        {/* Minutes */}
-                        <div className="flex flex-col items-center h-full">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              let nextMin = currentMinute - 5
-                              if (nextMin < 0) nextMin = 55
-                              handleMinuteSelect(nextMin)
-                            }}
-                            className="text-slate-400 hover:text-slate-600 p-1 transition-colors"
-                          >
-                            <ChevronUp className="size-4" />
-                          </button>
-                          <div ref={minuteScrollRef} className="flex flex-col gap-1 my-1 overflow-y-auto max-h-[150px] w-10 py-1 scrollbar-none items-center">
-                            {minutes.map((m) => {
-                              const isSelected = parseInt(m, 10) === currentMinute
-                              return (
-                                <button
-                                  key={m}
-                                  type="button"
-                                  data-selected={isSelected ? "true" : "false"}
-                                  onClick={() => handleMinuteSelect(parseInt(m, 10))}
-                                  className={`w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-colors shrink-0 ${isSelected
-                                    ? "bg-blue-50 text-blue-600 border border-blue-200"
-                                    : "text-slate-600 hover:bg-slate-55"
-                                    }`}
-                                >
-                                  {m}
-                                </button>
-                              )
-                            })}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              let nextMin = currentMinute + 5
-                              if (nextMin >= 60) nextMin = 0
-                              handleMinuteSelect(nextMin)
-                            }}
-                            className="text-slate-400 hover:text-slate-600 p-1 transition-colors"
-                          >
-                            <ChevronDown className="size-4" />
-                          </button>
-                        </div>
-
-                        {/* AM/PM */}
-                        <div className="flex flex-col border border-slate-200 rounded-lg overflow-hidden shrink-0 ml-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleAMPMSelect(false)}
-                            className={`px-2.5 py-1.5 text-xs font-bold transition-all ${!isPM ? "bg-blue-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
-                              }`}
-                          >
-                            AM
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleAMPMSelect(true)}
-                            className={`px-2.5 py-1.5 text-xs font-bold border-t border-slate-200 transition-all ${isPM ? "bg-blue-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
-                              }`}
-                          >
-                            PM
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })()}
+                {renderPickerContent(false)}
               </div>
             </div>
 
@@ -518,6 +538,27 @@ export function BookingFormDialog({
               </Button>
             </div>
           </form>
+
+          {/* Mobile Date & Time Picker Popup */}
+          <Dialog open={isPickerPopupOpen} onOpenChange={setIsPickerPopupOpen}>
+            <DialogContent className="w-[calc(100%-2rem)] max-w-[400px] p-4 bg-white rounded-xl shadow-lg border border-slate-100 gap-2">
+              <DialogTitle className="text-base font-bold text-gray-950 px-1">
+                Select {activeField === "start" ? "Start" : "End"} Date & Time
+              </DialogTitle>
+              <div className="flex flex-col border border-slate-100 rounded-xl p-2 gap-2 h-auto bg-white">
+                {renderPickerContent(true)}
+              </div>
+              <div className="flex justify-end pt-1">
+                <Button
+                  type="button"
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm"
+                  onClick={() => setIsPickerPopupOpen(false)}
+                >
+                  Done
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Nested Confirm Dialog for proper Radix focus management */}
           {isOpen && <BookingConfirmDialog

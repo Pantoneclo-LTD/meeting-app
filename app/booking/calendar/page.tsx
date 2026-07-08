@@ -2,7 +2,16 @@
 
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import FullCalendar from "@fullcalendar/react"
+import dynamic from "next/dynamic"
+
+const FullCalendar = dynamic(() => import("@fullcalendar/react"), {
+  ssr: false,
+  loading: () => (
+    <div className="p-4 h-full flex flex-col justify-center items-center min-h-[600px]">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
+    </div>
+  )
+})
 import dayGridPlugin from "@fullcalendar/daygrid"
 import timeGridPlugin from "@fullcalendar/timegrid"
 import interactionPlugin from "@fullcalendar/interaction"
@@ -13,6 +22,21 @@ import { useSession } from "next-auth/react"
 import { APP_CONFIG } from "@/lib/config"
 import { BookingDetailsDialog } from "@/components/ui/booking-dialogues/booking-details-dialog"
 import { BookingFormDialog } from "@/components/ui/booking-dialogues/booking-form-dialog"
+
+const CALENDAR_VIEWS = {
+  timeGridWeek: {
+    type: "timeGrid",
+    duration: { days: 7 },
+    dateIncrement: { days: 7 },
+    buttonText: "week",
+    visibleRange: (currentDate: Date) => {
+      const start = new Date(currentDate.valueOf());
+      const end = new Date(currentDate.valueOf());
+      end.setDate(start.getDate() + 7);
+      return { start, end };
+    }
+  }
+};
 
 export default function CalendarPage() {
   const queryClient = useQueryClient()
@@ -96,6 +120,7 @@ export default function CalendarPage() {
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="timeGridWeek"
             firstDay={5}
+            views={CALENDAR_VIEWS}
             headerToolbar={{
               left: "prev,next today",
               center: "title",

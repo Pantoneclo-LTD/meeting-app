@@ -67,6 +67,7 @@ export function BookingDetailsDialog({
   const status = localStatus || booking?.status || booking?.extendedProps?.status || "PENDING"
   const userName = booking?.user?.name || booking?.extendedProps?.owner || booking?.extendedProps?.userName || booking?.userName || "Unknown"
   const userEmail = booking?.user?.email || booking?.extendedProps?.userEmail || booking?.userEmail || ""
+  const isExpired = endTime ? dayjs(endTime).isBefore(dayjs()) : false
 
   const isAdmin = userRole === "ADMIN" || userRole === "SUPERADMIN"
   const isCreator = currentUserId && (booking?.userId === currentUserId || booking?.extendedProps?.userId === currentUserId)
@@ -126,7 +127,7 @@ export function BookingDetailsDialog({
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChangeHandler}>
         <DialogContent
-          className="sm:max-w-[480px] p-6 gap-6 bg-white rounded-xl shadow-lg border border-slate-100"
+          className="w-[calc(100%-2rem)] sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-6 gap-6 bg-white rounded-xl shadow-lg border border-slate-100"
         >
           <DialogHeader className="flex flex-row items-center justify-between pb-2">
             <DialogTitle className="text-xl font-bold text-gray-955">Booking Details</DialogTitle>
@@ -162,7 +163,7 @@ export function BookingDetailsDialog({
               <div>
                 <h3 className="text-sm font-semibold text-slate-500">Status</h3>
                 <div className="mt-1">
-                  {id && availableOptions.length > 0 ? (
+                  {id && availableOptions.length > 0 && !isExpired ? (
                     <Select
                       value={currentStatusClean}
                       disabled={currentStatusClean === 'CANCELLED' || currentStatusClean === 'REJECTED'}
@@ -201,14 +202,19 @@ export function BookingDetailsDialog({
                     </Select>
                   ) : (
                     <span
-                      className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide border ${status === "APPROVED"
-                        ? "bg-emerald-100/70 text-emerald-800 border-emerald-200/50"
-                        : status === "PENDING"
-                          ? "bg-amber-100/70 text-amber-800 border-amber-200/50"
-                          : "bg-rose-100/70 text-rose-800 border-rose-200/50"
-                        }`}
+                      className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide border ${
+                        isExpired
+                          ? status === "APPROVED"
+                            ? "bg-emerald-100/70 text-emerald-800 border-emerald-200/50"
+                            : "bg-slate-100 text-slate-800 border-slate-200/50"
+                          : status === "APPROVED"
+                            ? "bg-emerald-100/70 text-emerald-800 border-emerald-200/50"
+                            : status === "PENDING"
+                              ? "bg-amber-100/70 text-amber-800 border-amber-200/50"
+                              : "bg-rose-100/70 text-rose-800 border-rose-200/50"
+                      }`}
                     >
-                      {status}
+                      {isExpired ? (status === "APPROVED" ? "Done" : "Expired") : status}
                     </span>
                   )}
                 </div>

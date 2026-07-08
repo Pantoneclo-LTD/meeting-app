@@ -12,10 +12,12 @@ import dayjs from "dayjs"
 import { Button } from "@/components/ui/button"
 import { updateBookingStatus } from "@/app/actions/booking"
 import { toast } from "sonner"
-import { Eye } from "lucide-react"
+import { Eye, ChevronDown } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { BookingDetailsDialog } from "@/components/ui/booking-dialogues/booking-details-dialog"
 import { useSession } from "next-auth/react"
+import { cn } from "@/lib/utils"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
 type BookingRow = {
   id: string
@@ -79,7 +81,7 @@ export function UserBookingTable({
         const start = dayjs(info.getValue())
         const end = dayjs(info.row.original.endTime)
         return (
-          <div className="text-sm">
+          <div className="text-xs md:text-sm">
             <div>{start.format("MMM D, YYYY")}</div>
             <div className="text-gray-500">{start.format("h:mm A")} - {end.format("h:mm A")}</div>
           </div>
@@ -90,11 +92,34 @@ export function UserBookingTable({
       header: 'Status',
       cell: info => {
         const status = info.getValue()
+        const endTime = info.row.original.endTime
+        const isExpired = endTime ? dayjs(endTime).isBefore(dayjs()) : false
+
+        let displayStatus = status
         let color = "bg-gray-100 text-gray-800"
-        if (status === "APPROVED") color = "bg-green-100 text-green-800"
-        if (status === "PENDING") color = "bg-yellow-100 text-yellow-800"
-        if (status === "REJECTED" || status === "CANCELLED") color = "bg-red-100 text-red-800"
-        return <span className={`px-2 py-1 rounded text-xs font-medium ${color}`}>{status}</span>
+        
+        if (isExpired) {
+          if (status === "APPROVED") {
+            displayStatus = "Done"
+            color = "bg-green-100 text-green-800"
+          } else {
+            displayStatus = "Expired"
+            color = "bg-slate-100 text-slate-800"
+          }
+        } else {
+          if (status === "APPROVED") color = "bg-green-100 text-green-800"
+          if (status === "PENDING") color = "bg-yellow-100 text-yellow-800"
+          if (status === "REJECTED" || status === "CANCELLED") color = "bg-red-100 text-red-800"
+        }
+
+        return (
+          <>
+            {/* Desktop Status */}
+            <span className={`hidden md:inline-block px-2 py-1 rounded text-xs font-medium ${color}`}>{displayStatus}</span>
+            {/* Mobile Status (reduced size more) */}
+            <span className={`inline-block md:hidden px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider ${color}`}>{displayStatus}</span>
+          </>
+        )
       },
     }),
     columnHelper.display({
@@ -102,23 +127,59 @@ export function UserBookingTable({
       header: 'Actions',
       cell: info => {
         const booking = info.row.original
+        const isExpired = booking.endTime ? dayjs(booking.endTime).isBefore(dayjs()) : false
         return (
-          <div className="flex items-center gap-2">
-            <Button
-              size="icon-sm"
-              variant="outline"
-              title="View Details"
-              onClick={() => setSelectedBooking(booking)}
-              className="text-gray-500 hover:text-gray-900 border-gray-200 hover:border-gray-300"
-            >
-              <Eye className="size-4" />
-            </Button>
-            {booking.status === "PENDING" && (
-              <Button size="sm" variant="outline" onClick={() => handleCancel(booking.id)}>
-                Cancel Request
+          <>
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center gap-1.5">
+              <Button
+                size="icon-sm"
+                variant="outline"
+                title="View Details"
+                onClick={() => setSelectedBooking(booking)}
+                className="text-gray-500 hover:text-gray-900 border-gray-200 hover:border-gray-300 h-8 w-8"
+              >
+                <Eye className="size-4" />
               </Button>
-            )}
-          </div>
+              {booking.status === "PENDING" && !isExpired && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleCancel(booking.id)}
+                  className="h-8 px-3 text-xs"
+                >
+                  Cancel Request
+                </Button>
+              )}
+            </div>
+
+            {/* Mobile Actions (Dropdown) */}
+            <div className="flex md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 px-2 text-xs flex items-center gap-1 font-semibold border-slate-200 bg-white">
+                    Actions <ChevronDown className="size-3.5 text-slate-400" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-36 bg-white border border-slate-100 shadow-lg rounded-lg p-1">
+                  <DropdownMenuItem
+                    onClick={() => setSelectedBooking(booking)}
+                    className="flex items-center gap-2 text-xs font-semibold px-2 py-1.5 hover:bg-slate-50 rounded-md cursor-pointer text-slate-700"
+                  >
+                    <Eye className="size-3.5 text-slate-400" /> View Details
+                  </DropdownMenuItem>
+                  {booking.status === "PENDING" && !isExpired && (
+                    <DropdownMenuItem
+                      onClick={() => handleCancel(booking.id)}
+                      className="flex items-center gap-2 text-xs font-semibold px-2 py-1.5 hover:bg-rose-50 text-rose-600 rounded-md cursor-pointer"
+                    >
+                      Cancel Request
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </>
         )
       },
     }),
@@ -149,40 +210,60 @@ export function UserBookingTable({
       </div>
 
       <div className="border rounded-md bg-white">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 border-b">
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id} className="p-3 font-semibold text-gray-700">
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.length === 0 && (
-              <tr>
-                <td colSpan={columns.length} className="p-4 text-center text-gray-500">
-                  No bookings found. You can book a room from the Calendar.
-                </td>
-              </tr>
-            )}
-            {table.getRowModel().rows.map(row => (
-              <tr key={row.id} className="border-b hover:bg-gray-50">
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="p-3">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs md:text-sm text-left">
+            <thead className="bg-gray-50 border-b">
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => {
+                    const isDateTime = header.id === 'startTime';
+                    return (
+                      <th
+                        key={header.id}
+                        className={cn(
+                          "p-2 md:p-3 font-semibold text-gray-700",
+                          isDateTime && "whitespace-nowrap w-full md:w-auto md:whitespace-normal"
+                        )}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                      </th>
+                    );
+                  })}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.length === 0 && (
+                <tr>
+                  <td colSpan={columns.length} className="p-2 md:p-3 text-center text-gray-500">
+                    No bookings found. You can book a room from the Calendar.
                   </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </tr>
+              )}
+              {table.getRowModel().rows.map(row => (
+                <tr key={row.id} className="border-b hover:bg-gray-50">
+                  {row.getVisibleCells().map(cell => {
+                    const isDateTime = cell.column.id === 'startTime';
+                    return (
+                      <td
+                        key={cell.id}
+                        className={cn(
+                          "p-2 md:p-3",
+                          isDateTime && "whitespace-nowrap md:whitespace-normal"
+                        )}
+                      >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  );
+                })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <div className="flex items-center justify-between p-3 border-t bg-gray-50">
           <div className="text-gray-500 text-sm">

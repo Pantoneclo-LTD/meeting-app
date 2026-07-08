@@ -29,7 +29,8 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarRail
+  SidebarRail,
+  useSidebar
 } from '@/components/ui/sidebar';
 import {
   ChevronRight,
@@ -57,6 +58,7 @@ interface NavItem {
 export function AppSidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const { isMobile, setOpenMobile } = useSidebar()
 
 
 
@@ -144,7 +146,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex gap-2 py-2 text-sidebar-accent-foreground ">
-          <Link href={`/`}>
+          <Link href={`/`} onClick={() => isMobile && setOpenMobile(false)}>
             <Image
               className="dark:invert group-data-[collapsible=icon]:hidden"
               src="/logo.png"

@@ -110,10 +110,10 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
       id: 'actions',
       header: 'Actions',
       cell: info => (
-        <div className="space-x-2">
-          <Button size="sm" variant="outline" onClick={() => setEditingUser(info.row.original)}>Edit</Button>
-          <Button size="sm" variant="outline" onClick={() => setChangePasswordUserId(info.row.original.id)}>Change Password</Button>
-          <Button size="sm" variant="destructive" onClick={() => handleDelete(info.row.original.id)}>Delete</Button>
+        <div className="flex items-center gap-1.5">
+          <Button size="sm" variant="outline" onClick={() => setEditingUser(info.row.original)} className="h-7 px-2 text-[11px] md:h-8 md:px-3 md:text-xs">Edit</Button>
+          <Button size="sm" variant="outline" onClick={() => setChangePasswordUserId(info.row.original.id)} className="h-7 px-2 text-[11px] md:h-8 md:px-3 md:text-xs">Change Password</Button>
+          <Button size="sm" variant="destructive" onClick={() => handleDelete(info.row.original.id)} className="h-7 px-2 text-[11px] md:h-8 md:px-3 md:text-xs">Delete</Button>
         </div>
       ),
     }),
@@ -252,30 +252,32 @@ export function UserTable({ initialUsers }: { initialUsers: UserRow[] }) {
       </div>
 
       <div className="border rounded-md bg-white">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 border-b">
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id} className="p-3 font-semibold text-gray-700">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map(row => (
-              <tr key={row.id} className="border-b hover:bg-gray-50">
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="p-3">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs md:text-sm text-left">
+            <thead className="bg-gray-50 border-b">
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id} className="p-2 md:p-3 font-semibold text-gray-700">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map(row => (
+                <tr key={row.id} className="border-b hover:bg-gray-50">
+                  {row.getVisibleCells().map(cell => (
+                    <td key={cell.id} className="p-2 md:p-3">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <div className="flex items-center justify-between p-3 border-t bg-gray-50">
           <div className="text-gray-500 text-sm">

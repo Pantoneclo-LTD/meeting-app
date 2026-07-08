@@ -128,3 +128,52 @@
     @apply font-sans;
   }
 }
+
+/* FullCalendar Mobile Responsiveness */
+@media (max-width: 768px) {
+  .fc .fc-header-toolbar,
+  .fc .fc-toolbar {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+    flex-wrap: nowrap !important;
+  }
+  
+  .fc .fc-toolbar-chunk {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+  }
+
+  .fc .fc-button {
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+    height: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .fc .fc-header-toolbar,
+  .fc .fc-toolbar {
+    gap: 0.15rem !important;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 0.75rem !important;
+  }
+
+  .fc .fc-button {
+    font-size: 0.65rem !important;
+    padding: 0.15rem 0.3rem !important;
+  }
+}

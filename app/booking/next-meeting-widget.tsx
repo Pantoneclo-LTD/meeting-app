@@ -98,18 +98,20 @@ export function NextMeetingWidget({ meeting }: NextMeetingProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex flex-col">
-            <span className="text-sm text-white/70 font-medium uppercase tracking-wider">Start Time</span>
-            <span className="text-2xl font-bold">{startTime.format('h:mm A')}</span>
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-2">
+          <div className="flex justify-between sm:contents">
+            <div className="flex flex-col">
+              <span className="text-xs text-white/70 font-medium uppercase tracking-wider">Start Time</span>
+              <span className="text-xl sm:text-2xl font-bold">{startTime.format('h:mm A')}</span>
+            </div>
+            <div className="flex flex-col text-right sm:text-left sm:order-last">
+              <span className="text-xs text-white/70 font-medium uppercase tracking-wider">End Time</span>
+              <span className="text-xl sm:text-2xl font-bold">{endTime.format('h:mm A')}</span>
+            </div>
           </div>
-          <div className="flex flex-col items-center">
-            <span className="text-sm text-white/70 font-medium uppercase tracking-wider">Status</span>
-            <span className="text-lg font-semibold bg-black/20 px-4 py-1 rounded-full backdrop-blur-sm">{statusText}</span>
-          </div>
-          <div className="flex flex-col text-right">
-            <span className="text-sm text-white/70 font-medium uppercase tracking-wider">End Time</span>
-            <span className="text-2xl font-bold">{endTime.format('h:mm A')}</span>
+          <div className="flex flex-col items-center sm:items-center">
+            <span className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">Status</span>
+            <span className="text-sm sm:text-lg font-semibold bg-black/20 px-4 py-1 rounded-full backdrop-blur-sm text-center w-full sm:w-auto">{statusText}</span>
           </div>
         </div>
 

@@ -4,15 +4,6 @@ import { env } from "@/lib/env"
 import nodemailer from "nodemailer"
 import { getReminderEmailHtml } from "@/lib/email-templates"
 
-type ReminderBooking = {
-  id: string
-  purpose: string
-  startTime: Date
-  user: {
-    name: string
-    email: string
-  }
-}
 
 const transport = nodemailer.createTransport({
   host: env.SMTP_HOST,
@@ -35,16 +26,27 @@ export async function GET() {
     const in15MinsMax = new Date(now.getTime() + 16 * 60000)
 
     // 1. Fetch bookings for 30 min reminder
-    const bookings30 = await prisma.$queryRaw<ReminderBooking[]>`
-      SELECT b.id, b.purpose, b."startTime",
-             json_build_object('name', u.name, 'email', u.email) as user
-      FROM "Booking" b
-      JOIN "User" u ON b."userId" = u.id
-      WHERE b.status = 'APPROVED'
-        AND b."reminder30Sent" = false
-        AND b."startTime" >= ${in30MinsMin}
-        AND b."startTime" <= ${in30MinsMax}
-    `
+    const bookings30 = await prisma.booking.findMany({
+      where: {
+        status: "APPROVED",
+        reminder30Sent: false,
+        startTime: {
+          gte: in30MinsMin,
+          lte: in30MinsMax,
+        },
+      },
+      select: {
+        id: true,
+        purpose: true,
+        startTime: true,
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+    })
 
     for (const booking of bookings30) {
       if (!booking.user?.email) continue
@@ -56,27 +58,37 @@ export async function GET() {
           html: getReminderEmailHtml(booking.user.name, booking.purpose, booking.startTime, 30)
         })
         
-        await prisma.$executeRaw`
-          UPDATE "Booking"
-          SET "reminder30Sent" = true
-          WHERE id = ${booking.id}
-        `
+        await prisma.booking.update({
+          where: { id: booking.id },
+          data: { reminder30Sent: true },
+        })
       } catch (err) {
         console.error(`Failed to send 30m reminder to ${booking.user.email}`, err)
       }
     }
 
     // 2. Fetch bookings for 15 min reminder
-    const bookings15 = await prisma.$queryRaw<ReminderBooking[]>`
-      SELECT b.id, b.purpose, b."startTime",
-             json_build_object('name', u.name, 'email', u.email) as user
-      FROM "Booking" b
-      JOIN "User" u ON b."userId" = u.id
-      WHERE b.status = 'APPROVED'
-        AND b."reminder15Sent" = false
-        AND b."startTime" >= ${in15MinsMin}
-        AND b."startTime" <= ${in15MinsMax}
-    `
+    const bookings15 = await prisma.booking.findMany({
+      where: {
+        status: "APPROVED",
+        reminder15Sent: false,
+        startTime: {
+          gte: in15MinsMin,
+          lte: in15MinsMax,
+        },
+      },
+      select: {
+        id: true,
+        purpose: true,
+        startTime: true,
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+    })
 
     for (const booking of bookings15) {
       if (!booking.user?.email) continue
@@ -88,11 +100,10 @@ export async function GET() {
           html: getReminderEmailHtml(booking.user.name, booking.purpose, booking.startTime, 15)
         })
         
-        await prisma.$executeRaw`
-          UPDATE "Booking"
-          SET "reminder15Sent" = true
-          WHERE id = ${booking.id}
-        `
+        await prisma.booking.update({
+          where: { id: booking.id },
+          data: { reminder15Sent: true },
+        })
       } catch (err) {
         console.error(`Failed to send 15m reminder to ${booking.user.email}`, err)
       }
