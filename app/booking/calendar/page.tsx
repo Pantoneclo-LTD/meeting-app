@@ -143,6 +143,8 @@ export default function CalendarPage() {
               startTime: '08:00',
               endTime: '20:00',
             }}
+            selectLongPressDelay={0}
+            eventLongPressDelay={0}
           />
         </div>
       </div>

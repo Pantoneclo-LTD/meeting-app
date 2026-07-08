@@ -49,12 +49,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token
     },
     async session({ session, token }) {
-      if (token.role) {
-        session.user.role = token.role as "SUPERADMIN" | "ADMIN" | "USER"
-      }
-      if (session.user) {
-        session.user.id = token.id as string
+      const tokenId = token.id as string
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      
+      if (session.user && tokenId && uuidRegex.test(tokenId)) {
+        session.user.id = tokenId
         session.user.team = token.team as string | undefined
+        if (token.role) {
+          session.user.role = token.role as "SUPERADMIN" | "ADMIN" | "USER"
+        }
+      } else if (session.user) {
+        // Invalidate stale or non-UUID sessions (e.g. from pre-migration databases)
+        session.user = null as unknown as typeof session.user
       }
       return session
     }
